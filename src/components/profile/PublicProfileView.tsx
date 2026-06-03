@@ -46,7 +46,14 @@ export function PublicProfileView({
                 className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
               >
                 <div>
-                  <p className="font-medium">{d.title}</p>
+                  <p className="font-medium">
+                    <Link
+                      href={profilePath(d.counterparty_name)}
+                      className="hover:underline"
+                    >
+                      {d.counterparty_name}
+                    </Link>
+                  </p>
                   <p className="text-sm text-zinc-600 dark:text-zinc-400">
                     <Badge variant="default" className="align-middle">
                       {d.role === "buyer" ? "Buyer" : "Seller"}

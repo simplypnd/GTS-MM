@@ -94,7 +94,7 @@ export interface DealPaymentQr {
 
 export interface PublicProfileDeal {
   id: string;
-  title: string;
+  counterparty_name: string;
   completed_at: string;
   role: "buyer" | "seller";
 }
