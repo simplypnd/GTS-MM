@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Navbar } from "@/components/layout/Navbar";
 import "./globals.css";
@@ -12,6 +12,11 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   title: "GTS Escrow",
@@ -29,7 +34,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-zinc-50 font-sans text-zinc-900 antialiased`}
       >
         <Navbar />
-        <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+        <main className="mx-auto max-w-5xl px-4 py-6 sm:py-8">{children}</main>
       </body>
     </html>
   );

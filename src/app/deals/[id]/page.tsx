@@ -89,13 +89,13 @@ export default async function DealDetailPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">{deal.title}</h1>
+          <h1 className="text-xl font-bold sm:text-2xl">{deal.title}</h1>
           <p className="text-zinc-600">{deal.description}</p>
         </div>
         <Badge variant="info">{STATUS_LABELS[typedDeal.status]}</Badge>
       </div>
 
-      <p className="text-2xl font-semibold">{formatPHP(deal.amount_centavos)}</p>
+      <p className="text-xl font-semibold sm:text-2xl">{formatPHP(deal.amount_centavos)}</p>
 
       <PartyStrip buyer={buyer as Profile} seller={seller as Profile} />
 
@@ -110,7 +110,7 @@ export default async function DealDetailPage({
       )}
 
       {deal.status === "disputed" && profile?.is_mediator && (
-        <div className="rounded-lg border p-4 text-sm space-y-2">
+        <div className="rounded-lg border p-4 text-sm space-y-2 break-words">
           <p>
             Release to Seller ({seller?.display_name}):{" "}
             {sellerPayout

@@ -8,7 +8,7 @@ export function PartyStrip({
   seller?: Profile | null;
 }) {
   return (
-    <div className="flex flex-wrap gap-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm">
+    <div className="flex flex-col gap-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm sm:flex-row sm:flex-wrap">
       <div>
         <span className="font-medium text-zinc-500">Buyer</span>
         <p className="font-semibold text-zinc-900">

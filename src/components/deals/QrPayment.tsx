@@ -52,7 +52,7 @@ export function QrPayment({
       </CardHeader>
       <CardContent className="space-y-4">
         {!qrUrl ? (
-          <Button onClick={startPayment} disabled={loading}>
+          <Button onClick={startPayment} disabled={loading} className="w-full sm:w-auto">
             {loading ? "Generating QR…" : "Generate QR code"}
           </Button>
         ) : (
@@ -62,7 +62,7 @@ export function QrPayment({
               <img
                 src={qrUrl}
                 alt="QR Ph payment code"
-                className="mx-auto max-w-xs rounded-lg border"
+                className="mx-auto w-full max-w-xs rounded-lg border"
               />
             ) : (
               <p className="text-sm text-zinc-600 break-all">{qrUrl}</p>

@@ -14,7 +14,7 @@ export default async function HomePage() {
   return (
     <div className="space-y-8">
       <section className="text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-zinc-900">
+        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
           Secure deals with pseudo-escrow
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-zinc-600">
@@ -22,25 +22,29 @@ export default async function HomePage() {
           confirms or a mediator resolves a dispute. Sellers receive payouts to
           their bank account.
         </p>
-        <div className="mt-6 flex justify-center gap-4">
+        <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
           {user ? (
             <>
-              <Link href="/dashboard">
-                <Button size="lg">Go to dashboard</Button>
+              <Link href="/dashboard" className="w-full sm:w-auto">
+                <Button size="lg" className="w-full sm:w-auto">
+                  Go to dashboard
+                </Button>
               </Link>
-              <Link href="/deals/new">
-                <Button variant="outline" size="lg">
+              <Link href="/deals/new" className="w-full sm:w-auto">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto">
                   Create deal
                 </Button>
               </Link>
             </>
           ) : (
             <>
-              <Link href="/register">
-                <Button size="lg">Get started</Button>
+              <Link href="/register" className="w-full sm:w-auto">
+                <Button size="lg" className="w-full sm:w-auto">
+                  Get started
+                </Button>
               </Link>
-              <Link href="/login">
-                <Button variant="outline" size="lg">
+              <Link href="/login" className="w-full sm:w-auto">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto">
                   Log in
                 </Button>
               </Link>

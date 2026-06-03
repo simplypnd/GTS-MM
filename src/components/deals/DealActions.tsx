@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Deal, DealStatus, ParticipantRole } from "@/lib/types/database";
 
+const actionBtn = "w-full sm:w-auto";
+
 export function DealActions({
   deal,
   participantRole,
@@ -42,10 +44,11 @@ export function DealActions({
   const status = deal.status as DealStatus;
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
       {status === "draft" && deal.created_by && (
         <Button
           disabled={loading}
+          className={actionBtn}
           onClick={() => action("/start-payment")}
         >
           Start payment
@@ -59,14 +62,14 @@ export function DealActions({
       )}
 
       {status === "funded" && participantRole === "seller" && (
-        <Button disabled={loading} onClick={() => action("/ship")}>
+        <Button disabled={loading} className={actionBtn} onClick={() => action("/ship")}>
           Mark shipped
         </Button>
       )}
 
       {(status === "funded" || status === "in_progress") &&
         participantRole === "buyer" && (
-          <Button disabled={loading} onClick={() => action("/confirm")}>
+          <Button disabled={loading} className={actionBtn} onClick={() => action("/confirm")}>
             Confirm receipt
           </Button>
         )}
@@ -78,6 +81,7 @@ export function DealActions({
               <Button
                 variant="outline"
                 disabled={loading}
+                className={actionBtn}
                 onClick={() => setShowDispute(true)}
               >
                 Open dispute
@@ -89,17 +93,22 @@ export function DealActions({
                   value={disputeReason}
                   onChange={(e) => setDisputeReason(e.target.value)}
                 />
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <Button
                     variant="destructive"
                     disabled={loading || !disputeReason.trim()}
+                    className={actionBtn}
                     onClick={() =>
                       action("/dispute", "POST", { reason: disputeReason })
                     }
                   >
                     Submit dispute
                   </Button>
-                  <Button variant="ghost" onClick={() => setShowDispute(false)}>
+                  <Button
+                    variant="ghost"
+                    className={actionBtn}
+                    onClick={() => setShowDispute(false)}
+                  >
                     Cancel
                   </Button>
                 </div>
@@ -112,6 +121,7 @@ export function DealActions({
         <>
           <Button
             disabled={loading}
+            className={actionBtn}
             onClick={() => action("/resolve", "POST", { resolution: "release" })}
           >
             Release to seller
@@ -119,6 +129,7 @@ export function DealActions({
           <Button
             variant="destructive"
             disabled={loading}
+            className={actionBtn}
             onClick={() => action("/resolve", "POST", { resolution: "refund" })}
           >
             Refund to buyer
@@ -127,7 +138,7 @@ export function DealActions({
       )}
 
       {status === "expired" && participantRole === "buyer" && (
-        <Button disabled={loading} onClick={() => action("/start-payment")}>
+        <Button disabled={loading} className={actionBtn} onClick={() => action("/start-payment")}>
           Retry payment
         </Button>
       )}

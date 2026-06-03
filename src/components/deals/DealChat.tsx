@@ -74,7 +74,7 @@ export function DealChat({
   }
 
   return (
-    <div className="flex h-96 flex-col rounded-xl border border-zinc-200 bg-white">
+    <div className="flex h-80 flex-col rounded-xl border border-zinc-200 bg-white sm:h-96">
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((m) => (
           <div
@@ -83,8 +83,8 @@ export function DealChat({
               m.is_system
                 ? "text-center text-xs text-zinc-500 italic"
                 : m.sender_id === currentUserId
-                  ? "ml-8 text-right"
-                  : "mr-8"
+                  ? "ml-2 text-right sm:ml-8"
+                  : "mr-2 sm:mr-8"
             }
           >
             {!m.is_system && m.sender_role && (
@@ -107,14 +107,15 @@ export function DealChat({
         ))}
         <div ref={bottomRef} />
       </div>
-      <form onSubmit={send} className="flex gap-2 border-t p-3">
+      <form onSubmit={send} className="flex flex-col gap-2 border-t p-3 sm:flex-row">
         <Input
           value={body}
           onChange={(e) => setBody(e.target.value)}
           placeholder="Type a message…"
           disabled={sending}
+          className="flex-1"
         />
-        <Button type="submit" disabled={sending}>
+        <Button type="submit" disabled={sending} className="w-full sm:w-auto">
           Send
         </Button>
       </form>

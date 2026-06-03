@@ -88,7 +88,7 @@ export default function RegisterPage() {
           </div>
           <div>
             <Label>Default role (for new deals)</Label>
-            <div className="mt-2 flex gap-4">
+            <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:gap-4">
               {(["buyer", "seller", "mediator"] as ProfileRole[]).map((r) => (
                 <label key={r} className="flex items-center gap-2 text-sm">
                   <input
