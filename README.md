@@ -41,6 +41,8 @@ Pseudo-escrow webapp: buyers pay via **PayMongo QR Ph**, funds stay on your plat
 
    Password reset emails should redirect to `/reset-password` (not `/dashboard`). Users stay in recovery mode until they submit a new password; expired links show an error on `/forgot-password` instead of logging them in.
 
+   **PKCE / code verifier:** Request the reset email and open the link in the **same browser** where you submitted the form. Auth codes are exchanged in the browser (`/auth/callback` and `/reset-password` use client-side `@supabase/ssr` cookies). Opening the email on another device will fail with “PKCE code verifier not found”.
+
    Built-in Supabase email has low rate limits; wait between test signups/resets, use custom SMTP, or disable **Confirm email** in dev to avoid `email rate limit exceeded`.
 
 ### 2. PayMongo

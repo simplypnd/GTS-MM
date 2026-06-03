@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { Menu, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { isRecoveryUser } from "@/lib/auth/recovery";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -104,29 +105,43 @@ export function Navbar() {
     setMenuOpen(false);
   }, [pathname]);
 
+  const isPasswordResetFlow =
+    pathname.startsWith("/reset-password") && isRecoveryUser(user);
+
   return (
     <header className="border-b border-zinc-200 bg-white">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-        <Link href={user ? "/dashboard" : "/"} className="font-semibold text-zinc-900">
-          GTS Escrow
-        </Link>
+        {isPasswordResetFlow ? (
+          <span className="font-semibold text-zinc-900">GTS Escrow</span>
+        ) : (
+          <Link
+            href={user ? "/dashboard" : "/"}
+            className="font-semibold text-zinc-900"
+          >
+            GTS Escrow
+          </Link>
+        )}
 
-        <nav className="hidden items-center gap-4 text-sm md:flex">
-          <NavLinks user={user} onSignOut={handleSignOut} />
-        </nav>
+        {!isPasswordResetFlow && (
+          <>
+            <nav className="hidden items-center gap-4 text-sm md:flex">
+              <NavLinks user={user} onSignOut={handleSignOut} />
+            </nav>
 
-        <button
-          type="button"
-          className="inline-flex items-center justify-center rounded-lg p-2 text-zinc-700 hover:bg-zinc-100 md:hidden"
-          aria-label={menuOpen ? "Close menu" : "Open menu"}
-          aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((open) => !open)}
-        >
-          {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-lg p-2 text-zinc-700 hover:bg-zinc-100 md:hidden"
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </>
+        )}
       </div>
 
-      {menuOpen && (
+      {menuOpen && !isPasswordResetFlow && (
         <nav className="border-t border-zinc-200 px-4 py-3 md:hidden">
           <div className="flex flex-col gap-1 text-sm">
             <NavLinks
