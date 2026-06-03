@@ -29,6 +29,7 @@ export function QrPayment({
   useEffect(() => {
     if (!qrUrl) return;
     const interval = setInterval(async () => {
+      await fetch(`/api/deals/${dealId}/sync-payment`, { method: "POST" });
       const res = await fetch(`/api/deals/${dealId}/status`);
       const data = await res.json();
       if (data.status === "funded") {

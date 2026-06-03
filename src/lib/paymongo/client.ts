@@ -1,5 +1,3 @@
-import crypto from "crypto";
-
 const PAYMONGO_API = "https://api.paymongo.com";
 
 function authHeader(secretKey: string): string {
@@ -166,27 +164,4 @@ export async function listReceivingInstitutions(provider = "instapay") {
   }>(`/v1/wallets/receiving_institutions?provider=${provider}`);
 }
 
-export function verifyWebhookSignature(
-  payload: string,
-  signatureHeader: string | null
-): boolean {
-  const secret = process.env.PAYMONGO_WEBHOOK_SECRET;
-  if (!secret || !signatureHeader) return !secret; // dev: skip if no secret
-  // PayMongo sends t=timestamp,v1=signature
-  const parts = signatureHeader.split(",");
-  const v1 = parts.find((p) => p.startsWith("v1="))?.slice(3);
-  if (!v1) return false;
-  const t = parts.find((p) => p.startsWith("t="))?.slice(2) ?? "";
-  const signed = crypto
-    .createHmac("sha256", secret)
-    .update(`${t}.${payload}`)
-    .digest("hex");
-  try {
-    const a = Buffer.from(v1, "hex");
-    const b = Buffer.from(signed, "hex");
-    if (a.length !== b.length) return false;
-    return crypto.timingSafeEqual(a, b);
-  } catch {
-    return false;
-  }
-}
+export { verifyWebhookSignature } from "@/lib/paymongo/webhook";

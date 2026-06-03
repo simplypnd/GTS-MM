@@ -48,8 +48,13 @@ Pseudo-escrow webapp: buyers pay via **PayMongo QR Ph**, funds stay on your plat
 ### 2. PayMongo
 
 1. Get test/live keys from the PayMongo Dashboard.
-2. Configure a webhook pointing to `{APP_URL}/api/webhooks/paymongo` for `payment.paid`, `qrph.expired`, and transfer callbacks.
+2. Configure a webhook in PayMongo Dashboard:
+   - **URL:** `https://app.gtseller.shop/api/webhooks/paymongo` (must be publicly reachable; localhost will not receive events)
+   - **Events:** `payment.paid`, `payment_intent.succeeded`, `qrph.expired` (and transfer callbacks if using disbursements)
+   - Copy the webhook **secret** into `PAYMONGO_WEBHOOK_SECRET` (must match; signature uses `Paymongo-Signature` with `te`/`li` fields)
 3. Set wallet source account env vars for disbursements.
+
+   If you already paid but the deal stays on “awaiting payment”, open the deal page as the buyer — it polls PayMongo every 5s and syncs status. You can also `POST /api/deals/{id}/sync-payment` while logged in.
 
 ### 3. Environment
 
