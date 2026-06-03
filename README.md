@@ -27,13 +27,17 @@ Pseudo-escrow webapp: buyers pay via **PayMongo QR Ph**, funds stay on your plat
 5. Enable **Realtime** for the `messages` table (migration adds it to publication).
 6. Copy URL, anon key, and service role key.
 7. Under **Authentication → URL Configuration**, set:
-   - **Site URL:** `https://app.gtseller.shop` (or your production domain)
-   - **Redirect URLs:** `https://app.gtseller.shop/auth/callback`
-   - For local dev, also add: `http://localhost:3000/auth/callback`
+   - **Site URL (production):** `https://app.gtseller.shop`
+   - **Site URL (local dev only):** `http://localhost:3000` — switch back before shipping; if production Site URL is localhost, emails will point at localhost.
+   - **Redirect URLs (add every URL you use):**
+     - `https://app.gtseller.shop/auth/callback`
+     - `http://localhost:3000/auth/callback`
 
-   If Site URL is still `http://localhost:3000`, confirmation emails will redirect to localhost even in production.
+   **If reset/confirm links look like `http://localhost:3000/?code=...` (root, no `/auth/callback`):** Supabase rejected `redirectTo` because `/auth/callback` was missing from **Redirect URLs**. It falls back to **Site URL** and appends `?code=`. Add the callback URLs above, ensure `.env.local` has `NEXT_PUBLIC_APP_URL=http://localhost:3000` for local dev, then request a **new** reset email. The app also redirects `/?code=` → `/auth/callback` as a safety net.
 
-   Password reset emails use the same `/auth/callback` with `?next=/reset-password` (handled automatically when users use **Forgot password?** on the login page).
+   Under **Authentication → Email Templates**, reset/confirm links must use `{{ .ConfirmationURL }}` (default). Do not replace with `{{ .SiteURL }}` only.
+
+   Password reset completes at `/reset-password` after `/auth/callback` exchanges the `code` (and `type=recovery` when present).
 
    Built-in Supabase email has low rate limits; wait between test signups/resets, use custom SMTP, or disable **Confirm email** in dev to avoid `email rate limit exceeded`.
 
