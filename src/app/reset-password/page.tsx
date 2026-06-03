@@ -8,6 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  authHashErrorMessage,
+  clearAuthHashFromUrl,
+  parseAuthHashErrors,
+} from "@/lib/auth/hash-errors";
+import { isRecoveryUser } from "@/lib/auth/recovery";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -15,35 +21,69 @@ export default function ResetPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [hasSession, setHasSession] = useState<boolean | null>(null);
+  const [hasRecoverySession, setHasRecoverySession] = useState<boolean | null>(
+    null
+  );
 
   useEffect(() => {
     const supabase = createClient();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY" || session) {
-        setHasSession(true);
+    async function init() {
+      const hashErr = parseAuthHashErrors();
+      if (hashErr) {
+        await supabase.auth.signOut();
+        setError(authHashErrorMessage(hashErr));
+        setHasRecoverySession(false);
+        clearAuthHashFromUrl();
+        return;
       }
-    });
 
-    async function establishSession() {
       const params = new URLSearchParams(window.location.search);
       const code = params.get("code");
+
       if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
-        if (!error) {
-          setHasSession(true);
-          window.history.replaceState({}, "", "/reset-password");
+        const { error: exchangeError } =
+          await supabase.auth.exchangeCodeForSession(code);
+        window.history.replaceState({}, "", "/reset-password");
+        if (exchangeError) {
+          setError(exchangeError.message);
+          setHasRecoverySession(false);
           return;
         }
       }
-      const { data: { session } } = await supabase.auth.getSession();
-      setHasSession(!!session);
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user && isRecoveryUser(user)) {
+        setHasRecoverySession(true);
+        return;
+      }
+
+      if (user && !isRecoveryUser(user)) {
+        await supabase.auth.signOut();
+      }
+      setHasRecoverySession(false);
     }
 
-    establishSession();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setHasRecoverySession(true);
+        return;
+      }
+      if (event === "SIGNED_OUT") {
+        setHasRecoverySession(false);
+        return;
+      }
+      if (session?.user && isRecoveryUser(session.user)) {
+        setHasRecoverySession(true);
+      }
+    });
+
+    void init();
 
     return () => subscription.unsubscribe();
   }, []);
@@ -75,7 +115,7 @@ export default function ResetPasswordPage() {
     router.refresh();
   }
 
-  if (hasSession === null) {
+  if (hasRecoverySession === null) {
     return (
       <Card className="mx-auto max-w-md">
         <CardContent className="pt-6">
@@ -85,13 +125,14 @@ export default function ResetPasswordPage() {
     );
   }
 
-  if (!hasSession) {
+  if (!hasRecoverySession) {
     return (
       <Card className="mx-auto max-w-md">
         <CardHeader>
           <CardTitle>Reset password</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {error && <p className="text-sm text-red-600">{error}</p>}
           <p className="text-sm text-zinc-600">
             This link is invalid or has expired. Request a new reset email.
           </p>
@@ -118,6 +159,9 @@ export default function ResetPasswordPage() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <p className="text-sm text-zinc-600">
+            Set a new password to finish resetting your account.
+          </p>
           <div>
             <Label htmlFor="password">New password</Label>
             <Input

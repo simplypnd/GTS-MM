@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { Menu, X } from "lucide-react";
@@ -12,10 +12,12 @@ import { cn } from "@/lib/utils";
 function NavLinks({
   user,
   onNavigate,
+  onSignOut,
   className,
 }: {
   user: User | null;
   onNavigate?: () => void;
+  onSignOut: () => Promise<void>;
   className?: string;
 }) {
   const linkClass =
@@ -36,17 +38,18 @@ function NavLinks({
         <Link href="/disputes" className={cn(linkClass, className)} onClick={onNavigate}>
           Disputes
         </Link>
-        <form action="/api/auth/signout" method="post" className="md:inline">
-          <Button
-            type="submit"
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start md:w-auto md:justify-center"
-            onClick={onNavigate}
-          >
-            Sign out
-          </Button>
-        </form>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start md:w-auto md:justify-center"
+          onClick={() => {
+            onNavigate?.();
+            void onSignOut();
+          }}
+        >
+          Sign out
+        </Button>
       </>
     );
   }
@@ -68,6 +71,7 @@ function NavLinks({
 }
 
 export function Navbar() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -88,6 +92,14 @@ export function Navbar() {
     return () => subscription.unsubscribe();
   }, []);
 
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    setUser(null);
+    router.push("/");
+    router.refresh();
+  }
+
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
@@ -100,7 +112,7 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden items-center gap-4 text-sm md:flex">
-          <NavLinks user={user} />
+          <NavLinks user={user} onSignOut={handleSignOut} />
         </nav>
 
         <button
@@ -117,7 +129,11 @@ export function Navbar() {
       {menuOpen && (
         <nav className="border-t border-zinc-200 px-4 py-3 md:hidden">
           <div className="flex flex-col gap-1 text-sm">
-            <NavLinks user={user} onNavigate={() => setMenuOpen(false)} />
+            <NavLinks
+              user={user}
+              onNavigate={() => setMenuOpen(false)}
+              onSignOut={handleSignOut}
+            />
           </div>
         </nav>
       )}

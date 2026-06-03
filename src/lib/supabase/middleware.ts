@@ -1,16 +1,19 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isRecoveryUser } from "@/lib/auth/recovery";
 
 export async function updateSession(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const token_hash = request.nextUrl.searchParams.get("token_hash");
-  if (
-    (code || token_hash) &&
-    !request.nextUrl.pathname.startsWith("/auth/callback")
-  ) {
+  if (code || token_hash) {
     const url = request.nextUrl.clone();
-    url.pathname = "/auth/callback";
-    return NextResponse.redirect(url);
+    if (request.nextUrl.pathname.startsWith("/reset-password")) {
+      return NextResponse.next({ request });
+    }
+    if (!request.nextUrl.pathname.startsWith("/auth/callback")) {
+      url.pathname = "/auth/callback";
+      return NextResponse.redirect(url);
+    }
   }
 
   let supabaseResponse = NextResponse.next({ request });
@@ -49,6 +52,17 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/deals") ||
     request.nextUrl.pathname.startsWith("/disputes") ||
     request.nextUrl.pathname.startsWith("/settings");
+
+  if (user && isRecoveryUser(user)) {
+    if (!request.nextUrl.pathname.startsWith("/reset-password")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/reset-password";
+      url.search = "";
+      url.hash = "";
+      return NextResponse.redirect(url);
+    }
+    return supabaseResponse;
+  }
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone();

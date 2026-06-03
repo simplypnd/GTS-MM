@@ -31,13 +31,15 @@ Pseudo-escrow webapp: buyers pay via **PayMongo QR Ph**, funds stay on your plat
    - **Site URL (local dev only):** `http://localhost:3000` — switch back before shipping; if production Site URL is localhost, emails will point at localhost.
    - **Redirect URLs (add every URL you use):**
      - `https://app.gtseller.shop/auth/callback`
+     - `https://app.gtseller.shop/reset-password`
      - `http://localhost:3000/auth/callback`
+     - `http://localhost:3000/reset-password`
 
    **If reset/confirm links look like `http://localhost:3000/?code=...` (root, no `/auth/callback`):** Supabase rejected `redirectTo` because `/auth/callback` was missing from **Redirect URLs**. It falls back to **Site URL** and appends `?code=`. Add the callback URLs above, ensure `.env.local` has `NEXT_PUBLIC_APP_URL=http://localhost:3000` for local dev, then request a **new** reset email. The app also redirects `/?code=` → `/auth/callback` as a safety net.
 
    Under **Authentication → Email Templates**, reset/confirm links must use `{{ .ConfirmationURL }}` (default). Do not replace with `{{ .SiteURL }}` only.
 
-   Password reset completes at `/reset-password` after `/auth/callback` exchanges the `code` (and `type=recovery` when present).
+   Password reset emails should redirect to `/reset-password` (not `/dashboard`). Users stay in recovery mode until they submit a new password; expired links show an error on `/forgot-password` instead of logging them in.
 
    Built-in Supabase email has low rate limits; wait between test signups/resets, use custom SMTP, or disable **Confirm email** in dev to avoid `email rate limit exceeded`.
 

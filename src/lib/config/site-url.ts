@@ -9,9 +9,9 @@ export function getAuthCallbackUrl(): string {
   return `${getSiteUrl()}/auth/callback`;
 }
 
-/** Use bare callback URL; Supabase appends type=recovery (next= is often stripped). */
+/** Reset emails should land on the reset page (add this URL in Supabase Redirect URLs). */
 export function getPasswordResetRedirectUrl(): string {
-  return getAuthCallbackUrl();
+  return `${getSiteUrl()}/reset-password`;
 }
 
 const ALLOWED_CALLBACK_PATHS = ["/dashboard", "/reset-password"] as const;
