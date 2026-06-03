@@ -1,0 +1,5 @@
+# Minimal Supabase local config reference
+# See https://supabase.com/docs/guides/cli
+
+[project]
+id = "gts-escrow"
