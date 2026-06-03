@@ -71,6 +71,32 @@ export interface Message {
   sender?: Profile;
 }
 
+export interface DealReview {
+  id: string;
+  deal_id: string;
+  reviewer_id: string;
+  reviewee_id: string;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+}
+
+export interface PublicProfileDeal {
+  id: string;
+  title: string;
+  amount_centavos: number;
+  completed_at: string;
+  role: "buyer" | "seller";
+}
+
+export interface PublicProfile {
+  display_name: string;
+  member_since: string;
+  positive_percent: number | null;
+  review_count: number;
+  recent_deals: PublicProfileDeal[];
+}
+
 export interface Dispute {
   id: string;
   deal_id: string;

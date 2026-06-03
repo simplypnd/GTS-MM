@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { assertTransition } from "@/lib/escrow/dealState";
+import { logDealEvent } from "@/lib/escrow/events";
 
 export async function POST(
   _request: Request,
@@ -49,6 +50,14 @@ export async function POST(
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  const service = await createServiceClient();
+  await logDealEvent(service, {
+    dealId: id,
+    actorId: user.id,
+    actorRole: "buyer",
+    event: "payment_window_started",
+  });
 
   return NextResponse.json({ ok: true });
 }

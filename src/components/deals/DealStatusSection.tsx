@@ -12,6 +12,7 @@ import {
   statusBadgeVariant,
 } from "@/lib/deals/statusGuidance";
 import { formatDealEventLabel } from "@/lib/deals/eventLabels";
+import { isQrActive } from "@/lib/deals/paymentQr";
 import { createClient } from "@/lib/supabase/client";
 import { sectionEnter } from "@/lib/motion";
 import { cn } from "@/lib/utils";
@@ -47,6 +48,8 @@ export function DealStatusSection({
   paymentQr: initialPaymentQr,
   currentUserId,
   buyerBalanceCentavos,
+  canCancelForNonDelivery = false,
+  cancelWaitMinutes = 0,
 }: {
   deal: Deal;
   participantRole: ParticipantRole | null;
@@ -55,6 +58,8 @@ export function DealStatusSection({
   paymentQr: PaymentQr | null;
   currentUserId: string;
   buyerBalanceCentavos?: number | null;
+  canCancelForNonDelivery?: boolean;
+  cancelWaitMinutes?: number;
 }) {
   const [deal, setDeal] = useState(initialDeal);
   const [dispute, setDispute] = useState(initialDispute);
@@ -173,13 +178,21 @@ export function DealStatusSection({
     supabase,
   ]);
 
-  async function handleFunded() {
+  async function refreshDealStatus() {
     const res = await fetch(`/api/deals/${dealId}/status`);
     const data = await res.json();
     if (data.status) {
       setDeal((prev) => ({ ...prev, status: data.status as DealStatus }));
     }
   }
+
+  useEffect(() => {
+    if (deal.status !== "awaiting_payment") return;
+    const interval = setInterval(() => {
+      void refreshDealStatus();
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, [deal.status, dealId]);
 
   const status = deal.status as DealStatus;
   const canPayWithBalance =
@@ -189,10 +202,12 @@ export function DealStatusSection({
     canPayWithBalance,
     deal,
   });
-  const showQr =
+  const hasActiveQr =
     status === "awaiting_payment" &&
     deal.buyer_id === currentUserId &&
-    !!paymentQr?.qr_image_url;
+    isQrActive(paymentQr);
+
+  const showQr = hasActiveQr;
 
   return (
     <section>
@@ -222,7 +237,7 @@ export function DealStatusSection({
             </div>
           )}
 
-          {showQr && (
+          {showQr && paymentQr && (
             <div
               className={cn(
                 "motion-safe:animate-fade-in motion-reduce:animate-none"
@@ -233,7 +248,7 @@ export function DealStatusSection({
                 initialQrUrl={paymentQr.qr_image_url}
                 initialExpiresAt={paymentQr.expires_at}
                 embedded
-                onFunded={handleFunded}
+                onFunded={refreshDealStatus}
               />
             </div>
           )}
@@ -243,6 +258,9 @@ export function DealStatusSection({
             participantRole={participantRole}
             isMediator={isMediator}
             buyerBalanceCentavos={buyerBalanceCentavos}
+            hasActiveQr={hasActiveQr}
+            canCancelForNonDelivery={canCancelForNonDelivery}
+            cancelWaitMinutes={cancelWaitMinutes}
           />
 
           {eventsLoaded && events.length > 0 && (

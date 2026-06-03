@@ -12,6 +12,15 @@ export function formatPHP(centavos: number): string {
   }).format(centavos / 100);
 }
 
+export function formatReviewCount(count: number): string {
+  const formatted = new Intl.NumberFormat("en-PH").format(count);
+  return count === 1 ? "1 review" : `${formatted} reviews`;
+}
+
+export function profilePath(displayName: string): string {
+  return `/u/${encodeURIComponent(displayName)}`;
+}
+
 export function maskAccountNumber(num: string): string {
   if (num.length <= 4) return "****";
   return `****${num.slice(-4)}`;

@@ -3,9 +3,21 @@ import { createClient } from "@/lib/supabase/server";
 import { PartyStrip } from "@/components/deals/PartyStrip";
 import { DealChat } from "@/components/deals/DealChat";
 import { DealFeeSummary } from "@/components/deals/DealFeeSummary";
+import { DealReviewSection } from "@/components/deals/DealReviewSection";
 import { DealStatusSection } from "@/components/deals/DealStatusSection";
+import {
+  canBuyerCancelForNonDelivery,
+  enforceUnpaidDealTimeout,
+  getPaymentPaidAt,
+} from "@/lib/escrow/cancelDeal";
+import { createServiceClient } from "@/lib/supabase/server";
 import { formatPHP } from "@/lib/utils";
-import type { Deal, Profile, ParticipantRole } from "@/lib/types/database";
+import type {
+  Deal,
+  DealReview,
+  Profile,
+  ParticipantRole,
+} from "@/lib/types/database";
 
 export default async function DealDetailPage({
   params,
@@ -26,6 +38,19 @@ export default async function DealDetailPage({
     .single();
 
   if (!deal) notFound();
+
+  if (deal.status === "awaiting_payment") {
+    const service = await createServiceClient();
+    await enforceUnpaidDealTimeout(service, id);
+    const { data: refreshed } = await supabase
+      .from("deals")
+      .select("*")
+      .eq("id", id)
+      .single();
+    if (refreshed) {
+      Object.assign(deal, refreshed);
+    }
+  }
 
   const { data: buyer } = await supabase
     .from("profiles")
@@ -75,6 +100,32 @@ export default async function DealDetailPage({
     paymentQr = payment;
   }
 
+  let canCancelForNonDelivery = false;
+  let cancelWaitMinutes = 0;
+  if (deal.status === "funded" && deal.buyer_id === user.id) {
+    const service = await createServiceClient();
+    const { data: events } = await service
+      .from("deal_events")
+      .select("event, created_at")
+      .eq("deal_id", id)
+      .order("created_at", { ascending: false });
+    const eligibility = canBuyerCancelForNonDelivery(
+      getPaymentPaidAt(events ?? [])
+    );
+    canCancelForNonDelivery = eligibility.allowed;
+    cancelWaitMinutes = eligibility.waitMinutes;
+  }
+
+  let existingReview: DealReview | null = null;
+  if (deal.status === "completed") {
+    const { data: review } = await supabase
+      .from("deal_reviews")
+      .select("*")
+      .eq("deal_id", id)
+      .maybeSingle();
+    existingReview = review as DealReview | null;
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -92,6 +143,14 @@ export default async function DealDetailPage({
 
       <PartyStrip buyer={buyer as Profile} seller={seller as Profile} />
 
+      {deal.status === "completed" && (
+        <DealReviewSection
+          dealId={id}
+          participantRole={participantRole}
+          existingReview={existingReview}
+        />
+      )}
+
       <DealStatusSection
         deal={typedDeal}
         participantRole={participantRole}
@@ -102,6 +161,8 @@ export default async function DealDetailPage({
         buyerBalanceCentavos={
           deal.buyer_id === user.id ? profile?.balance_centavos : null
         }
+        canCancelForNonDelivery={canCancelForNonDelivery}
+        cancelWaitMinutes={cancelWaitMinutes}
       />
 
       {deal.status === "disputed" && profile?.is_mediator && (

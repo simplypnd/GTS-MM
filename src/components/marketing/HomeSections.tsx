@@ -29,7 +29,7 @@ const FEATURES = [
   {
     title: "Flexible buyer and seller roles",
     description:
-      "Choose your role per deal. Invite your counterparty by email for peer-to-peer transactions.",
+      "Choose your role per deal. Invite your counterparty by email or username for peer-to-peer transactions.",
   },
   {
     title: "Deal chat and dispute resolution",
@@ -215,66 +215,7 @@ export function HomeCta({ isLoggedIn }: { isLoggedIn: boolean }) {
   );
 }
 
-export function HomeFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
-  return (
-    <footer className="border-t border-zinc-200 bg-zinc-50/80 pt-12 pb-8 dark:border-zinc-800 dark:bg-zinc-950/80">
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 sm:grid-cols-3">
-        <div>
-          <p className="font-semibold text-zinc-900 dark:text-zinc-100">GTS MM</p>
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            Secure marketplace payments with MidMan fund protection for buyers
-            and sellers in the Philippines.
-          </p>
-        </div>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-            Product
-          </p>
-          <nav className="mt-3 flex flex-col gap-2 text-sm">
-            {isLoggedIn ? (
-              <>
-                <Link href="/dashboard" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
-                  Dashboard
-                </Link>
-                <Link href="/withdraw" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
-                  Withdraw
-                </Link>
-                <Link href="/settings/payouts" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
-                  Payout accounts
-                </Link>
-                <Link href="/deals/new" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
-                  New deal
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link href="/register" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
-                  Register
-                </Link>
-                <Link href="/login" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
-                  Log in
-                </Link>
-              </>
-            )}
-          </nav>
-        </div>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-            Account
-          </p>
-          <nav className="mt-3 flex flex-col gap-2 text-sm">
-            <Link href="/login" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
-              Log in
-            </Link>
-            <Link href="/register" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
-              Register
-            </Link>
-          </nav>
-        </div>
-      </div>
-      <p className="mx-auto mt-10 max-w-6xl px-4 text-center text-xs text-zinc-500">
-        © {new Date().getFullYear()} GTS MM. All rights reserved.
-      </p>
-    </footer>
-  );
+/** @deprecated Home page uses layout SiteFooter; kept for import compatibility */
+export function HomeFooter(_props: { isLoggedIn: boolean }) {
+  return null;
 }

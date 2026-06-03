@@ -3,7 +3,7 @@ import type { DealStatus } from "@/lib/types/database";
 const TRANSITIONS: Record<DealStatus, DealStatus[]> = {
   draft: ["awaiting_payment", "cancelled"],
   awaiting_payment: ["funded", "expired", "cancelled"],
-  funded: ["in_progress", "completed", "disputed"],
+  funded: ["in_progress", "completed", "disputed", "refunded"],
   in_progress: ["completed", "disputed"],
   disputed: ["completed", "refunded"],
   completed: [],

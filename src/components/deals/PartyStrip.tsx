@@ -1,4 +1,6 @@
+import Link from "next/link";
 import type { Profile } from "@/lib/types/database";
+import { profilePath } from "@/lib/utils";
 
 export function PartyStrip({
   buyer,
@@ -12,13 +14,31 @@ export function PartyStrip({
       <div>
         <span className="font-medium text-zinc-500">Buyer</span>
         <p className="font-semibold text-zinc-900 dark:text-zinc-100">
-          {buyer?.display_name ?? "—"}
+          {buyer?.display_name ? (
+            <Link
+              href={profilePath(buyer.display_name)}
+              className="hover:underline"
+            >
+              {buyer.display_name}
+            </Link>
+          ) : (
+            "—"
+          )}
         </p>
       </div>
       <div>
         <span className="font-medium text-zinc-500">Seller</span>
         <p className="font-semibold text-zinc-900 dark:text-zinc-100">
-          {seller?.display_name ?? "—"}
+          {seller?.display_name ? (
+            <Link
+              href={profilePath(seller.display_name)}
+              className="hover:underline"
+            >
+              {seller.display_name}
+            </Link>
+          ) : (
+            "—"
+          )}
         </p>
       </div>
     </div>

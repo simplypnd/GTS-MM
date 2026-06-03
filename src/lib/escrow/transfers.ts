@@ -67,7 +67,7 @@ export async function refundToBuyer(
   deal: Deal,
   amountCentavos?: number,
   actorId?: string,
-  actorRole?: "mediator"
+  actorRole?: "mediator" | "buyer"
 ) {
   const { gross, fee } = dealFeeBreakdown(deal);
   const refundAmount =

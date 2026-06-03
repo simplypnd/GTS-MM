@@ -31,22 +31,22 @@ export function getStatusGuidance(
     case "awaiting_payment":
       if (participantRole === "buyer") {
         if (options?.canPayWithBalance) {
-          return "Pay with balance or scan the QR code below.";
+          return "Complete payment within 20 minutes or this deal is cancelled automatically. Pay with balance or scan the QR below.";
         }
-        return "Scan the QR code below to pay the deal amount.";
+        return "Complete payment within 20 minutes or this deal is cancelled automatically. Scan the QR code below.";
       }
-      return "Waiting for the buyer to complete payment.";
+      return "Waiting for the buyer to complete payment within 20 minutes.";
     case "funded":
       if (participantRole === "seller") {
         return `Mark delivered once you have shipped or fulfilled the order.${netHint}`;
       }
       if (participantRole === "buyer") {
-        return `Waiting for the seller to mark the order as delivered.${netHint}`;
+        return `Waiting for the seller to mark delivered within 20 minutes. After that, you may cancel for a refund.${netHint}`;
       }
       return null;
     case "in_progress":
       if (participantRole === "buyer") {
-        return `Confirm receipt once you have received the order to release funds.${netHint}`;
+        return `Confirm receipt only when the item matches this deal. Releasing funds cannot be undone except through a dispute.${netHint}`;
       }
       if (participantRole === "seller") {
         return `Waiting for the buyer to confirm receipt.${netHint}`;
@@ -64,7 +64,7 @@ export function getStatusGuidance(
     case "refunded":
       return "Funds were refunded to the buyer.";
     case "cancelled":
-      return "This deal was cancelled.";
+      return "This deal was cancelled (manually or after payment was not received in time).";
     default:
       return null;
   }

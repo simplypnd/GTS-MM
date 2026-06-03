@@ -16,11 +16,17 @@ export function DealActions({
   participantRole,
   isMediator,
   buyerBalanceCentavos,
+  hasActiveQr = false,
+  canCancelForNonDelivery = false,
+  cancelWaitMinutes = 0,
 }: {
   deal: Deal;
   participantRole: ParticipantRole | null;
   isMediator: boolean;
   buyerBalanceCentavos?: number | null;
+  hasActiveQr?: boolean;
+  canCancelForNonDelivery?: boolean;
+  cancelWaitMinutes?: number;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -68,18 +74,22 @@ export function DealActions({
   async function startPaymentWithQr() {
     setLoading(true);
     try {
-      const startRes = await fetch(`/api/deals/${deal.id}/start-payment`, {
-        method: "POST",
-      });
-      const startData = await startRes.json();
-      if (!startRes.ok) {
-        throw new Error(startData.error ?? "Failed to start payment");
+      if (deal.status === "draft") {
+        const startRes = await fetch(`/api/deals/${deal.id}/start-payment`, {
+          method: "POST",
+        });
+        const startData = await startRes.json();
+        if (!startRes.ok) {
+          throw new Error(startData.error ?? "Failed to start payment");
+        }
       }
 
-      const payRes = await fetch(`/api/deals/${deal.id}/pay`, { method: "POST" });
-      const payData = await payRes.json();
-      if (!payRes.ok) {
-        throw new Error(payData.error ?? "Failed to generate QR");
+      if (!hasActiveQr) {
+        const payRes = await fetch(`/api/deals/${deal.id}/pay`, { method: "POST" });
+        const payData = await payRes.json();
+        if (!payRes.ok) {
+          throw new Error(payData.error ?? "Failed to generate QR");
+        }
       }
 
       router.refresh();
@@ -88,6 +98,22 @@ export function DealActions({
     } finally {
       setLoading(false);
     }
+  }
+
+  async function cancelDeal() {
+    const msg =
+      status === "funded"
+        ? "Cancel this deal and refund your payment to your balance?"
+        : "Cancel this deal? No funds have been transferred.";
+    if (!confirm(msg)) return;
+    await action("/cancel");
+  }
+
+  async function confirmReceive() {
+    const { net } = dealFeeBreakdown(deal);
+    const msg = `Confirm you received the correct item as described in this deal.\n\nFunds (${formatPHP(net)} after fees) will be released to the seller. This cannot be undone except through a dispute.`;
+    if (!confirm(msg)) return;
+    await action("/receive");
   }
 
   async function retryPaymentWithQr() {
@@ -137,18 +163,50 @@ export function DealActions({
                 {canPayWithBalance ? "Pay with QR Ph" : "Start payment"}
               </Button>
             )}
-            {status === "awaiting_payment" && (
+            {status === "awaiting_payment" && !hasActiveQr && (
               <Button
                 disabled={loading}
                 variant={canPayWithBalance ? "outline" : "default"}
                 className={actionBtn}
                 onClick={() => void retryPaymentWithQr()}
               >
-                Pay with QR Ph
+                Generate QR Ph
               </Button>
             )}
           </>
         )}
+
+      {(status === "draft" || status === "awaiting_payment") &&
+        (participantRole === "buyer" || participantRole === "seller") && (
+          <Button
+            variant="outline"
+            disabled={loading}
+            className={actionBtn}
+            onClick={() => void cancelDeal()}
+          >
+            Cancel deal
+          </Button>
+        )}
+
+      {status === "funded" && participantRole === "buyer" && (
+        <>
+          {canCancelForNonDelivery ? (
+            <Button
+              variant="destructive"
+              disabled={loading}
+              className={actionBtn}
+              onClick={() => void cancelDeal()}
+            >
+              Cancel for refund
+            </Button>
+          ) : cancelWaitMinutes > 0 ? (
+            <p className="w-full text-xs text-zinc-500 dark:text-zinc-400">
+              Refund cancel available in {cancelWaitMinutes} minute
+              {cancelWaitMinutes === 1 ? "" : "s"} if seller has not delivered.
+            </p>
+          ) : null}
+        </>
+      )}
 
       {status === "funded" && participantRole === "seller" && (
         <Button
@@ -164,7 +222,7 @@ export function DealActions({
         <Button
           disabled={loading}
           className={actionBtn}
-          onClick={() => action("/receive")}
+          onClick={() => void confirmReceive()}
         >
           Received
         </Button>
@@ -248,14 +306,16 @@ export function DealActions({
               Pay with balance ({formatPHP(deal.amount_centavos)})
             </Button>
           )}
-          <Button
-            disabled={loading}
-            variant={canPayWithBalance ? "outline" : "default"}
-            className={actionBtn}
-            onClick={() => void retryPaymentWithQr()}
-          >
-            Retry with QR Ph
-          </Button>
+          {!hasActiveQr && (
+            <Button
+              disabled={loading}
+              variant={canPayWithBalance ? "outline" : "default"}
+              className={actionBtn}
+              onClick={() => void retryPaymentWithQr()}
+            >
+              Regenerate QR Ph
+            </Button>
+          )}
         </>
       )}
     </div>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { enforceUnpaidDealTimeout } from "@/lib/escrow/cancelDeal";
 import { syncDealPaymentFromPaymongo } from "@/lib/escrow/syncPayment";
 
 export async function GET(
@@ -27,6 +28,12 @@ export async function GET(
     } = await supabase.auth.getUser();
     if (user && (deal.buyer_id === user.id || deal.seller_id === user.id)) {
       const service = await createServiceClient();
+      if (deal.status === "awaiting_payment") {
+        const timeout = await enforceUnpaidDealTimeout(service, id);
+        if (timeout.cancelled) {
+          return NextResponse.json({ status: timeout.status });
+        }
+      }
       const { status } = await syncDealPaymentFromPaymongo(service, id);
       return NextResponse.json({ status });
     }

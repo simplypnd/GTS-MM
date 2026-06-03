@@ -18,7 +18,8 @@ export default function NewDealPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
-  const [counterpartyEmail, setCounterpartyEmail] = useState("");
+  const [counterpartyIdentifier, setCounterpartyIdentifier] = useState("");
+  const [lookupHint, setLookupHint] = useState<string | null>(null);
   const [mySide, setMySide] = useState<"buyer" | "seller">("buyer");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -56,7 +57,7 @@ export default function NewDealPage() {
         title,
         description,
         amount_centavos: Math.round(peso * 100),
-        counterparty_email: counterpartyEmail,
+        counterparty_identifier: counterpartyIdentifier,
         my_side: mySide,
       }),
     });
@@ -100,15 +101,41 @@ export default function NewDealPage() {
             </div>
           </div>
           <div>
-            <Label htmlFor="counterparty">Counterparty email</Label>
+            <Label htmlFor="counterparty">Counterparty email or username</Label>
             <Input
               id="counterparty"
-              type="email"
-              value={counterpartyEmail}
-              onChange={(e) => setCounterpartyEmail(e.target.value)}
-              placeholder="seller@example.com"
+              value={counterpartyIdentifier}
+              onChange={(e) => {
+                setCounterpartyIdentifier(e.target.value);
+                setLookupHint(null);
+              }}
+              onBlur={async () => {
+                const id = counterpartyIdentifier.trim();
+                if (!id) return;
+                const res = await fetch(
+                  `/api/users/lookup?identifier=${encodeURIComponent(id)}`
+                );
+                const data = await res.json();
+                if (data.found) {
+                  setLookupHint(`User found: ${data.display_name}`);
+                } else {
+                  setLookupHint(data.error ?? "User not found");
+                }
+              }}
+              placeholder="user@example.com or juan_delacruz"
               required
             />
+            {lookupHint && (
+              <p
+                className={`mt-1 text-sm ${
+                  lookupHint.startsWith("User found")
+                    ? "text-emerald-700 dark:text-emerald-400"
+                    : "text-zinc-500 dark:text-zinc-400"
+                }`}
+              >
+                {lookupHint}
+              </p>
+            )}
           </div>
           <div>
             <Label htmlFor="title">Title</Label>

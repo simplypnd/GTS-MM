@@ -5,7 +5,6 @@ import {
   HomeCta,
   HomeFaq,
   HomeFeatures,
-  HomeFooter,
   HomeHero,
   HomeHowItWorks,
 } from "@/components/marketing/HomeSections";
@@ -63,7 +62,6 @@ export default async function HomePage() {
         <HomeFeatures />
         <HomeFaq />
         <HomeCta isLoggedIn={!!user} />
-        <HomeFooter isLoggedIn={!!user} />
       </article>
     </>
   );

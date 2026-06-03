@@ -1,3 +1,4 @@
+import { enforceUnpaidDealTimeout } from "@/lib/escrow/cancelDeal";
 import { getPaymentIntent } from "@/lib/paymongo/client";
 import { markDealFunded } from "@/lib/escrow/markFunded";
 import type { createServiceClient } from "@/lib/supabase/server";
@@ -22,6 +23,13 @@ export async function syncDealPaymentFromPaymongo(
 
   if (deal.status === "funded" || deal.status === "completed") {
     return { status: deal.status, synced: false };
+  }
+
+  if (deal.status === "awaiting_payment") {
+    const timeout = await enforceUnpaidDealTimeout(service, dealId);
+    if (timeout.cancelled) {
+      return { status: timeout.status, synced: false };
+    }
   }
 
   if (deal.status !== "awaiting_payment" && deal.status !== "expired") {

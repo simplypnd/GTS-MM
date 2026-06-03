@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthHashErrorHandler } from "@/components/auth/AuthHashErrorHandler";
 import { Navbar } from "@/components/layout/Navbar";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { ThemeScript } from "@/components/theme/ThemeScript";
 import { ThemeSync } from "@/components/theme/ThemeSync";
@@ -49,6 +50,7 @@ export default function RootLayout({
           <AuthHashErrorHandler />
           <Navbar />
           <main className="mx-auto max-w-5xl px-4 py-6 sm:py-8">{children}</main>
+          <SiteFooter />
         </ThemeProvider>
       </body>
     </html>

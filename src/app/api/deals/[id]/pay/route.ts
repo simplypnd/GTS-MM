@@ -5,7 +5,8 @@ import {
   createQrphPaymentMethod,
   attachPaymentMethod,
 } from "@/lib/paymongo/client";
-import { logDealEvent, postSystemMessage } from "@/lib/escrow/events";
+import { isQrActive } from "@/lib/deals/paymentQr";
+import { logDealEvent } from "@/lib/escrow/events";
 
 export async function POST(
   _request: Request,
@@ -51,6 +52,24 @@ export async function POST(
       .eq("id", dealId);
   }
 
+  const service = await createServiceClient();
+  const { data: existing } = await service
+    .from("paymongo_payments")
+    .select("payment_intent_id, qr_image_url, expires_at, status")
+    .eq("deal_id", dealId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existing && isQrActive(existing)) {
+    return NextResponse.json({
+      qrImageUrl: existing.qr_image_url,
+      expiresAt: existing.expires_at,
+      paymentIntentId: existing.payment_intent_id,
+      reused: true,
+    });
+  }
+
   try {
     const pi = await createPaymentIntent({
       amount: deal.amount_centavos,
@@ -69,7 +88,6 @@ export async function POST(
       attached.data.attributes.next_action?.code?.image_url ?? null;
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
 
-    const service = await createServiceClient();
     await service.from("paymongo_payments").upsert({
       deal_id: dealId,
       payment_intent_id: pi.data.id,

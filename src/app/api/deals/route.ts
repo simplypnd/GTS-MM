@@ -17,44 +17,45 @@ export async function POST(request: Request) {
     title,
     description,
     amount_centavos,
+    counterparty_identifier,
     counterparty_email,
     my_side,
   } = body as {
     title: string;
     description?: string;
     amount_centavos: number;
-    counterparty_email: string;
+    counterparty_identifier?: string;
+    counterparty_email?: string;
     my_side: "buyer" | "seller";
   };
 
-  if (!title || !amount_centavos || !counterparty_email || !my_side) {
+  const identifier =
+    counterparty_identifier?.trim() || counterparty_email?.trim() || "";
+
+  if (!title || !amount_centavos || !identifier || !my_side) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
 
-  // Look up counterparty by email via service client
   const { createServiceClient } = await import("@/lib/supabase/server");
-  const service = await createServiceClient();
-  const { data: authUsers } = await service.auth.admin.listUsers();
-  const counterparty = authUsers?.users?.find(
-    (u) => u.email?.toLowerCase() === counterparty_email.toLowerCase()
+  const { resolveCounterpartyUserId } = await import(
+    "@/lib/users/resolveCounterparty"
   );
+  const service = await createServiceClient();
+  const resolved = await resolveCounterpartyUserId(service, identifier);
 
-  if (!counterparty) {
-    return NextResponse.json(
-      { error: "Counterparty not found. They must register first." },
-      { status: 404 }
-    );
+  if ("error" in resolved) {
+    return NextResponse.json({ error: resolved.error }, { status: 404 });
   }
 
-  if (counterparty.id === user.id) {
+  if (resolved.userId === user.id) {
     return NextResponse.json(
       { error: "Cannot create a deal with yourself" },
       { status: 400 }
     );
   }
 
-  const buyer_id = my_side === "buyer" ? user.id : counterparty.id;
-  const seller_id = my_side === "seller" ? user.id : counterparty.id;
+  const buyer_id = my_side === "buyer" ? user.id : resolved.userId;
+  const seller_id = my_side === "seller" ? user.id : resolved.userId;
 
   const { data: deal, error } = await supabase
     .from("deals")
