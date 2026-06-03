@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LocalizedTime } from "@/components/ui/LocalizedTime";
 
 function QrPaymentContent({
   qrUrl,
@@ -11,8 +12,10 @@ function QrPaymentContent({
   expiresAt: string | null;
 }) {
   return (
-    <div className="space-y-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
-      <p className="text-sm font-medium text-zinc-900">Pay with QR Ph</p>
+    <div className="space-y-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-900/50">
+      <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+        Pay with QR Ph
+      </p>
       {qrUrl.startsWith("data:") ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -21,14 +24,20 @@ function QrPaymentContent({
           className="mx-auto w-full max-w-xs rounded-lg border bg-white"
         />
       ) : (
-        <p className="text-sm text-zinc-600 break-all">{qrUrl}</p>
+        <p className="text-sm text-zinc-600 break-all dark:text-zinc-400">
+          {qrUrl}
+        </p>
       )}
       {expiresAt && (
         <p className="text-xs text-zinc-500">
-          Expires: {new Date(expiresAt).toLocaleString()}
+          Expires:{" "}
+          <LocalizedTime
+            dateTime={expiresAt}
+            className="inline text-xs text-zinc-500"
+          />
         </p>
       )}
-      <p className="text-sm text-zinc-600">
+      <p className="text-sm text-zinc-600 dark:text-zinc-400">
         Scan with your bank or e-wallet app. Status updates automatically.
       </p>
     </div>

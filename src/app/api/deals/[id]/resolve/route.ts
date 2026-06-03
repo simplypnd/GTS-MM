@@ -5,6 +5,7 @@ import {
   refundToBuyer,
   creditPartialResolution,
 } from "@/lib/escrow/transfers";
+import { computeNetAfterFee } from "@/lib/escrow/dealState";
 import type { Deal } from "@/lib/types/database";
 
 export async function POST(
@@ -63,13 +64,7 @@ export async function POST(
         })
         .eq("deal_id", id);
     } else if (resolution === "refund") {
-      await refundToBuyer(
-        service,
-        deal as Deal,
-        deal.amount_centavos,
-        user.id,
-        "mediator"
-      );
+      await refundToBuyer(service, deal as Deal, undefined, user.id, "mediator");
       await service
         .from("disputes")
         .update({
@@ -80,9 +75,13 @@ export async function POST(
         })
         .eq("deal_id", id);
     } else if (resolution === "partial") {
+      const netEscrow = computeNetAfterFee(
+        deal.amount_centavos,
+        deal.platform_fee_bps
+      );
       const sellerAmt =
-        seller_amount_centavos ?? Math.floor(deal.amount_centavos / 2);
-      const buyerAmt = deal.amount_centavos - sellerAmt;
+        seller_amount_centavos ?? Math.floor(netEscrow / 2);
+      const buyerAmt = netEscrow - sellerAmt;
       await creditPartialResolution(
         service,
         deal as Deal,

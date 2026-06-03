@@ -1,5 +1,6 @@
-import type { createServiceClient } from "@/lib/supabase/server";
+import { dealFeeBreakdown, formatFeeMessage } from "@/lib/escrow/fees";
 import { logDealEvent, postSystemMessage } from "@/lib/escrow/events";
+import type { createServiceClient } from "@/lib/supabase/server";
 
 type Supabase = Awaited<ReturnType<typeof createServiceClient>>;
 
@@ -11,7 +12,7 @@ export async function markDealFunded(
 ) {
   const { data: deal } = await service
     .from("deals")
-    .select("status")
+    .select("status, amount_centavos, platform_fee_bps")
     .eq("id", dealId)
     .single();
 
@@ -33,16 +34,18 @@ export async function markDealFunded(
 
   await service.from("deals").update({ status: "funded" }).eq("id", dealId);
 
+  const breakdown = dealFeeBreakdown(deal);
   await logDealEvent(service, {
     dealId,
     event: "payment_paid",
-    payload: { payment_intent_id: paymentIntentId },
+    payload: {
+      payment_intent_id: paymentIntentId,
+      gross_centavos: breakdown.gross,
+      fee_centavos: breakdown.fee,
+      net_escrow_centavos: breakdown.net,
+    },
   });
-  await postSystemMessage(
-    service,
-    dealId,
-    "Payment received. Funds are held by MidMan."
-  );
+  await postSystemMessage(service, dealId, formatFeeMessage(deal));
 
   return { updated: true, status: "funded" as const };
 }

@@ -6,6 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  PLATFORM_FEE_BPS,
+  computeNetAfterFee,
+  computePlatformFee,
+} from "@/lib/escrow/dealState";
+import { formatPHP } from "@/lib/utils";
 
 export default function NewDealPage() {
   const router = useRouter();
@@ -16,6 +22,20 @@ export default function NewDealPage() {
   const [mySide, setMySide] = useState<"buyer" | "seller">("buyer");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const pesoPreview = parseFloat(amount);
+  const centavosPreview =
+    !isNaN(pesoPreview) && pesoPreview > 0
+      ? Math.round(pesoPreview * 100)
+      : null;
+  const feePreview =
+    centavosPreview != null
+      ? computePlatformFee(centavosPreview, PLATFORM_FEE_BPS)
+      : null;
+  const netPreview =
+    centavosPreview != null
+      ? computeNetAfterFee(centavosPreview, PLATFORM_FEE_BPS)
+      : null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -118,8 +138,15 @@ export default function NewDealPage() {
               onChange={(e) => setAmount(e.target.value)}
               required
             />
+            {centavosPreview != null && feePreview != null && netPreview != null && (
+              <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
+                Buyer pays {formatPHP(centavosPreview)}. MidMan fee (5%):{" "}
+                {formatPHP(feePreview)}. Seller receives {formatPHP(netPreview)}{" "}
+                on successful completion.
+              </p>
+            )}
           </div>
-          <p className="rounded-lg bg-zinc-50 p-3 text-xs text-zinc-600">
+          <p className="rounded-lg bg-zinc-50 p-3 text-xs text-zinc-600 dark:bg-zinc-900/50 dark:text-zinc-400">
             Review: You will be the <strong>{mySide}</strong>. Counterparty must
             already be registered.
           </p>

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PartyStrip } from "@/components/deals/PartyStrip";
 import { DealChat } from "@/components/deals/DealChat";
+import { DealFeeSummary } from "@/components/deals/DealFeeSummary";
 import { DealStatusSection } from "@/components/deals/DealStatusSection";
 import { formatPHP } from "@/lib/utils";
 import type { Deal, Profile, ParticipantRole } from "@/lib/types/database";
@@ -79,11 +80,14 @@ export default async function DealDetailPage({
       <div>
         <h1 className="text-xl font-bold sm:text-2xl">{deal.title}</h1>
         {deal.description && (
-          <p className="mt-1 text-zinc-600">{deal.description}</p>
+          <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+            {deal.description}
+          </p>
         )}
         <p className="mt-2 text-xl font-semibold sm:text-2xl">
           {formatPHP(deal.amount_centavos)}
         </p>
+        <DealFeeSummary deal={typedDeal} />
       </div>
 
       <PartyStrip buyer={buyer as Profile} seller={seller as Profile} />
@@ -101,11 +105,12 @@ export default async function DealDetailPage({
       />
 
       {deal.status === "disputed" && profile?.is_mediator && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100">
           <p className="font-medium">Mediator resolution</p>
           <p className="mt-1">
-            Release and refund credit party balances. They can withdraw to their
-            bank on <strong>/withdraw</strong> when ready.
+            Release and refund credit <strong>net amounts after the 5% fee</strong>{" "}
+            to party balances. They can withdraw to their bank on{" "}
+            <strong>/withdraw</strong> when ready.
           </p>
         </div>
       )}

@@ -12,6 +12,10 @@ export const FAQ_ITEMS = [
     a: "Pay with QR Ph through your bank or e-wallet app, or use your GTS MM wallet balance when you have enough funds.",
   },
   {
+    q: "What is the MidMan platform fee?",
+    a: "Each deal includes a 5% fee deducted when payment is received. The buyer pays the full deal amount; the net amount after the fee is held in escrow. On release or refund, parties receive that net amount to their GTS MM balance.",
+  },
+  {
     q: "What is my GTS MM balance?",
     a: "When a deal completes, your share is credited to your in-app balance. Withdraw to your bank anytime from the Withdraw page.",
   },

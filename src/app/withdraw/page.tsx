@@ -18,6 +18,7 @@ import {
 } from "@/lib/wallet/withdrawal";
 import { sectionEnter } from "@/lib/motion";
 import { LoadingSpinner } from "@/components/ui/spinner";
+import { LocalizedTime } from "@/components/ui/LocalizedTime";
 import { formatPHP } from "@/lib/utils";
 import type { PartyRole } from "@/lib/types/database";
 
@@ -287,9 +288,10 @@ export default function WithdrawPage() {
                       {t.status}
                     </Badge>
                   </span>
-                  <time className="w-full text-xs text-zinc-500">
-                    {new Date(t.created_at).toLocaleString()}
-                  </time>
+                  <LocalizedTime
+                    dateTime={t.created_at}
+                    className="w-full text-xs text-zinc-500"
+                  />
                 </li>
               ))}
             </ul>

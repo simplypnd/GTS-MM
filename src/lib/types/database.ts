@@ -14,6 +14,7 @@ export type PartyRole = "buyer" | "seller";
 export type TransferType = "release" | "refund" | "withdrawal";
 export type WithdrawalProvider = "instapay" | "pesonet";
 export type PaymentSource = "qrph" | "balance";
+export type ThemePreference = "light" | "dark";
 
 /** display_name is the unique public username (case-insensitive). */
 export interface Profile {
@@ -23,6 +24,7 @@ export interface Profile {
   is_mediator: boolean;
   phone: string | null;
   balance_centavos: number;
+  theme_preference: ThemePreference;
   created_at: string;
   updated_at: string;
 }

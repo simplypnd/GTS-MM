@@ -1,4 +1,8 @@
-import { computeSellerPayout } from "@/lib/escrow/dealState";
+import {
+  computeNetAfterFee,
+  computePlatformFee,
+} from "@/lib/escrow/dealState";
+import { dealFeeBreakdown } from "@/lib/escrow/fees";
 import { logDealEvent, postSystemMessage } from "@/lib/escrow/events";
 import { creditUserBalance } from "@/lib/wallet/balance";
 import type { createServiceClient } from "@/lib/supabase/server";
@@ -29,13 +33,10 @@ export async function releaseToSeller(
   actorId?: string,
   actorRole?: "buyer" | "seller" | "mediator"
 ) {
-  const amount = computeSellerPayout(
-    deal.amount_centavos,
-    deal.platform_fee_bps
-  );
+  const { gross, fee, net } = dealFeeBreakdown(deal);
   await creditUserBalance(supabase, {
     userId: deal.seller_id,
-    amountCentavos: amount,
+    amountCentavos: net,
     kind: "deal_release",
     dealId: deal.id,
   });
@@ -48,25 +49,34 @@ export async function releaseToSeller(
     actorId,
     actorRole,
     event: "released",
-    payload: { amount_centavos: amount },
+    payload: {
+      amount_centavos: net,
+      gross_centavos: gross,
+      fee_centavos: fee,
+    },
   });
   await postSystemMessage(
     supabase,
     deal.id,
-    `Funds credited to seller balance (₱${(amount / 100).toFixed(2)}). Withdraw at /withdraw.`
+    `Funds credited to seller balance (₱${(net / 100).toFixed(2)} after ${deal.platform_fee_bps / 100}% fee on ₱${(gross / 100).toFixed(2)}). Withdraw at /withdraw.`
   );
 }
 
 export async function refundToBuyer(
   supabase: Supabase,
   deal: Deal,
-  amountCentavos: number,
+  amountCentavos?: number,
   actorId?: string,
   actorRole?: "mediator"
 ) {
+  const { gross, fee } = dealFeeBreakdown(deal);
+  const refundAmount =
+    amountCentavos ??
+    computeNetAfterFee(deal.amount_centavos, deal.platform_fee_bps);
+
   await creditUserBalance(supabase, {
     userId: deal.buyer_id,
-    amountCentavos: amountCentavos,
+    amountCentavos: refundAmount,
     kind: "deal_refund",
     dealId: deal.id,
   });
@@ -79,12 +89,16 @@ export async function refundToBuyer(
     actorId,
     actorRole,
     event: "refunded",
-    payload: { amount_centavos: amountCentavos },
+    payload: {
+      amount_centavos: refundAmount,
+      gross_centavos: gross,
+      fee_centavos: fee,
+    },
   });
   await postSystemMessage(
     supabase,
     deal.id,
-    `Refund credited to buyer balance (₱${(amountCentavos / 100).toFixed(2)}).`
+    `Refund credited to buyer balance (₱${(refundAmount / 100).toFixed(2)} after ${deal.platform_fee_bps / 100}% fee on ₱${(gross / 100).toFixed(2)}).`
   );
 }
 
@@ -95,6 +109,16 @@ export async function creditPartialResolution(
   buyerAmountCentavos: number,
   actorId?: string
 ) {
+  const net = computeNetAfterFee(
+    deal.amount_centavos,
+    deal.platform_fee_bps
+  );
+  if (sellerAmountCentavos + buyerAmountCentavos > net) {
+    throw new Error(
+      `Partial amounts exceed net escrow (₱${(net / 100).toFixed(2)})`
+    );
+  }
+
   if (sellerAmountCentavos > 0) {
     await creditUserBalance(supabase, {
       userId: deal.seller_id,
@@ -125,11 +149,12 @@ export async function creditPartialResolution(
     payload: {
       seller_amount_centavos: sellerAmountCentavos,
       buyer_amount_centavos: buyerAmountCentavos,
+      net_escrow_centavos: net,
     },
   });
   await postSystemMessage(
     supabase,
     deal.id,
-    "Dispute resolved. Funds credited to buyer and seller balances."
+    `Dispute resolved. Seller ₱${(sellerAmountCentavos / 100).toFixed(2)}, buyer ₱${(buyerAmountCentavos / 100).toFixed(2)} credited (net escrow ₱${(net / 100).toFixed(2)}).`
   );
 }

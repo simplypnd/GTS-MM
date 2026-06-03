@@ -22,12 +22,28 @@ export function assertTransition(from: DealStatus, to: DealStatus): void {
   }
 }
 
+export const PLATFORM_FEE_BPS = 500;
+
+export function computePlatformFee(
+  amountCentavos: number,
+  platformFeeBps: number
+): number {
+  return Math.floor((amountCentavos * platformFeeBps) / 10000);
+}
+
+export function computeNetAfterFee(
+  amountCentavos: number,
+  platformFeeBps: number
+): number {
+  return amountCentavos - computePlatformFee(amountCentavos, platformFeeBps);
+}
+
+/** @deprecated Use computeNetAfterFee */
 export function computeSellerPayout(
   amountCentavos: number,
   platformFeeBps: number
 ): number {
-  const fee = Math.floor((amountCentavos * platformFeeBps) / 10000);
-  return amountCentavos - fee;
+  return computeNetAfterFee(amountCentavos, platformFeeBps);
 }
 
 export const STATUS_LABELS: Record<DealStatus, string> = {

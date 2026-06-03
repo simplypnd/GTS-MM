@@ -40,7 +40,7 @@ export default async function DashboardPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-zinc-600">
+          <p className="text-zinc-600 dark:text-zinc-400">
             Welcome, {profile?.display_name ?? user.email}
           </p>
         </div>

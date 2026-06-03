@@ -1,0 +1,1 @@
+ALTER TABLE deals ALTER COLUMN platform_fee_bps SET DEFAULT 500;

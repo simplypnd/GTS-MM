@@ -1,4 +1,5 @@
 import { assertTransition } from "@/lib/escrow/dealState";
+import { dealFeeBreakdown, formatFeeMessage } from "@/lib/escrow/fees";
 import { logDealEvent, postSystemMessage } from "@/lib/escrow/events";
 import { debitUserBalance } from "@/lib/wallet/balance";
 import type { createServiceClient } from "@/lib/supabase/server";
@@ -42,18 +43,24 @@ export async function markDealFundedFromBalance(
     .update({ status: "funded", payment_source: "balance" })
     .eq("id", deal.id);
 
+  const breakdown = dealFeeBreakdown(deal);
   await logDealEvent(service, {
     dealId: deal.id,
     actorId: buyerId,
     actorRole: "buyer",
     event: "payment_paid",
-    payload: { source: "balance", amount_centavos: deal.amount_centavos },
+    payload: {
+      source: "balance",
+      gross_centavos: breakdown.gross,
+      fee_centavos: breakdown.fee,
+      net_escrow_centavos: breakdown.net,
+    },
   });
 
   await postSystemMessage(
     service,
     deal.id,
-    "Payment received from buyer balance. Funds are held by MidMan."
+    `${formatFeeMessage(deal)} (paid from balance).`
   );
 
   return { updated: true, status: "funded" as const };

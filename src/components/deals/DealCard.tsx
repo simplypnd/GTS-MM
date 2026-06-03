@@ -27,7 +27,7 @@ export function DealCard({ deal, myRole }: { deal: Deal; myRole?: string }) {
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-lg font-semibold text-zinc-900">
+          <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             {formatPHP(deal.amount_centavos)}
           </p>
           {myRole && (

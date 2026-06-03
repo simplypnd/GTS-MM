@@ -50,7 +50,7 @@ export function HomeHero({ isLoggedIn }: { isLoggedIn: boolean }) {
   return (
     <section
       className={cn(
-        "rounded-2xl border border-zinc-200 bg-white px-6 py-12 text-center shadow-sm sm:px-12",
+        "rounded-2xl border border-zinc-200 bg-white px-6 py-12 text-center shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:px-12",
         staggerChild(0)
       )}
       aria-labelledby="hero-heading"
@@ -58,11 +58,11 @@ export function HomeHero({ isLoggedIn }: { isLoggedIn: boolean }) {
       <p className="text-sm font-medium text-zinc-500">GTS MM</p>
       <h1
         id="hero-heading"
-        className="mt-2 text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl"
+        className="mt-2 text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-4xl"
       >
         Secure online deals with MidMan protection
       </h1>
-      <p className="mx-auto mt-4 max-w-2xl text-zinc-600">
+      <p className="mx-auto mt-4 max-w-2xl text-zinc-600 dark:text-zinc-400">
         Pay with QR Ph or your GTS MM balance. Funds stay protected by MidMan until
         you confirm delivery—or a mediator resolves a dispute. Withdraw on your terms.
       </p>
@@ -114,7 +114,10 @@ export function HomeHowItWorks() {
       className={cn("space-y-6", staggerChild(1))}
       aria-labelledby="how-it-works-heading"
     >
-      <h2 id="how-it-works-heading" className="text-2xl font-bold text-zinc-900">
+      <h2
+        id="how-it-works-heading"
+        className="text-2xl font-bold text-zinc-900 dark:text-zinc-100"
+      >
         How MidMan deals work
       </h2>
       <ol className="space-y-4">
@@ -137,7 +140,10 @@ export function HomeFeatures() {
       className={cn("space-y-6", staggerChild(2))}
       aria-labelledby="features-heading"
     >
-      <h2 id="features-heading" className="text-2xl font-bold text-zinc-900">
+      <h2
+        id="features-heading"
+        className="text-2xl font-bold text-zinc-900 dark:text-zinc-100"
+      >
         Features for secure buyer–seller deals
       </h2>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -146,7 +152,7 @@ export function HomeFeatures() {
             <CardHeader>
               <CardTitle className="text-base">{f.title}</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-zinc-600">
+            <CardContent className="text-sm text-zinc-600 dark:text-zinc-400">
               {f.description}
             </CardContent>
           </Card>
@@ -162,7 +168,7 @@ export function HomeFaq() {
       className={cn("space-y-6", staggerChild(3))}
       aria-labelledby="faq-heading"
     >
-      <h2 id="faq-heading" className="text-2xl font-bold text-zinc-900">
+      <h2 id="faq-heading" className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
         Frequently asked questions
       </h2>
       <FaqAccordion />
@@ -211,11 +217,11 @@ export function HomeCta({ isLoggedIn }: { isLoggedIn: boolean }) {
 
 export function HomeFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
   return (
-    <footer className="border-t border-zinc-200 bg-zinc-50/80 pt-12 pb-8">
+    <footer className="border-t border-zinc-200 bg-zinc-50/80 pt-12 pb-8 dark:border-zinc-800 dark:bg-zinc-950/80">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 sm:grid-cols-3">
         <div>
-          <p className="font-semibold text-zinc-900">GTS MM</p>
-          <p className="mt-2 text-sm text-zinc-600">
+          <p className="font-semibold text-zinc-900 dark:text-zinc-100">GTS MM</p>
+          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
             Secure marketplace payments with MidMan fund protection for buyers
             and sellers in the Philippines.
           </p>
@@ -227,25 +233,25 @@ export function HomeFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
           <nav className="mt-3 flex flex-col gap-2 text-sm">
             {isLoggedIn ? (
               <>
-                <Link href="/dashboard" className="text-zinc-600 hover:text-zinc-900">
+                <Link href="/dashboard" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
                   Dashboard
                 </Link>
-                <Link href="/withdraw" className="text-zinc-600 hover:text-zinc-900">
+                <Link href="/withdraw" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
                   Withdraw
                 </Link>
-                <Link href="/settings/payouts" className="text-zinc-600 hover:text-zinc-900">
+                <Link href="/settings/payouts" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
                   Payout accounts
                 </Link>
-                <Link href="/deals/new" className="text-zinc-600 hover:text-zinc-900">
+                <Link href="/deals/new" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
                   New deal
                 </Link>
               </>
             ) : (
               <>
-                <Link href="/register" className="text-zinc-600 hover:text-zinc-900">
+                <Link href="/register" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
                   Register
                 </Link>
-                <Link href="/login" className="text-zinc-600 hover:text-zinc-900">
+                <Link href="/login" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
                   Log in
                 </Link>
               </>
@@ -257,10 +263,10 @@ export function HomeFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
             Account
           </p>
           <nav className="mt-3 flex flex-col gap-2 text-sm">
-            <Link href="/login" className="text-zinc-600 hover:text-zinc-900">
+            <Link href="/login" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
               Log in
             </Link>
-            <Link href="/register" className="text-zinc-600 hover:text-zinc-900">
+            <Link href="/register" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
               Register
             </Link>
           </nav>

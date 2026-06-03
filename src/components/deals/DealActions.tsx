@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { dealFeeBreakdown } from "@/lib/escrow/fees";
 import { formatPHP } from "@/lib/utils";
 import type { Deal, DealStatus, ParticipantRole } from "@/lib/types/database";
 
@@ -106,12 +107,17 @@ export function DealActions({
   }
 
   const status = deal.status as DealStatus;
+  const { net, feePercent } = dealFeeBreakdown(deal);
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
       {(status === "draft" || status === "awaiting_payment") &&
         participantRole === "buyer" && (
           <>
+            <p className="w-full text-xs text-zinc-500 dark:text-zinc-400">
+              You pay {formatPHP(deal.amount_centavos)}. Seller receives{" "}
+              {formatPHP(net)} after {feePercent}% fee.
+            </p>
             {canPayWithBalance && (
               <Button
                 disabled={loading}
@@ -177,7 +183,7 @@ export function DealActions({
                 Open dispute
               </Button>
             ) : (
-              <div className="w-full space-y-2 rounded-lg border p-3">
+              <div className="w-full space-y-2 rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
                 <Label>Reason</Label>
                 <Input
                   value={disputeReason}
@@ -209,6 +215,10 @@ export function DealActions({
 
       {status === "disputed" && isMediator && (
         <>
+          <p className="w-full text-xs text-zinc-500 dark:text-zinc-400">
+            Release credits seller {formatPHP(net)}. Refund credits buyer{" "}
+            {formatPHP(net)} (after {feePercent}% fee).
+          </p>
           <Button
             disabled={loading}
             className={actionBtn}

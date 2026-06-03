@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { logDealEvent } from "@/lib/escrow/events";
+import { PLATFORM_FEE_BPS } from "@/lib/escrow/dealState";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -65,6 +66,7 @@ export async function POST(request: Request) {
       seller_id,
       created_by: user.id,
       status: "draft",
+      platform_fee_bps: PLATFORM_FEE_BPS,
     })
     .select()
     .single();

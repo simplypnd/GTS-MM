@@ -74,7 +74,7 @@ export function DealChat({
   }
 
   return (
-    <div className="flex h-80 flex-col rounded-xl border border-zinc-200 bg-white sm:h-96">
+    <div className="flex h-80 flex-col rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 sm:h-96">
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((m) => (
           <div
@@ -97,8 +97,8 @@ export function DealChat({
                 m.is_system
                   ? ""
                   : m.sender_id === currentUserId
-                    ? "inline-block rounded-lg bg-zinc-900 px-3 py-2 text-sm text-white"
-                    : "inline-block rounded-lg bg-zinc-100 px-3 py-2 text-sm text-zinc-900"
+                    ? "inline-block rounded-lg bg-zinc-900 px-3 py-2 text-sm text-white dark:bg-zinc-100 dark:text-zinc-900"
+                    : "inline-block rounded-lg bg-zinc-100 px-3 py-2 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
               }
             >
               {m.body}

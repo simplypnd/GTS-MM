@@ -1,5 +1,7 @@
 import { STATUS_LABELS } from "@/lib/escrow/dealState";
-import type { DealStatus, ParticipantRole } from "@/lib/types/database";
+import { dealFeeBreakdown } from "@/lib/escrow/fees";
+import { formatPHP } from "@/lib/utils";
+import type { Deal, DealStatus, ParticipantRole } from "@/lib/types/database";
 
 export function getStatusLabel(status: DealStatus): string {
   return STATUS_LABELS[status];
@@ -8,8 +10,13 @@ export function getStatusLabel(status: DealStatus): string {
 export function getStatusGuidance(
   status: DealStatus,
   participantRole: ParticipantRole | null,
-  options?: { canPayWithBalance?: boolean }
+  options?: { canPayWithBalance?: boolean; deal?: Deal }
 ): string | null {
+  const netHint =
+    options?.deal &&
+    ["funded", "in_progress", "disputed"].includes(status)
+      ? ` ${formatPHP(dealFeeBreakdown(options.deal).net)} held in escrow after fees.`
+      : "";
   if (!participantRole) return null;
 
   switch (status) {
@@ -31,24 +38,24 @@ export function getStatusGuidance(
       return "Waiting for the buyer to complete payment.";
     case "funded":
       if (participantRole === "seller") {
-        return "Mark delivered once you have shipped or fulfilled the order.";
+        return `Mark delivered once you have shipped or fulfilled the order.${netHint}`;
       }
       if (participantRole === "buyer") {
-        return "Waiting for the seller to mark the order as delivered.";
+        return `Waiting for the seller to mark the order as delivered.${netHint}`;
       }
       return null;
     case "in_progress":
       if (participantRole === "buyer") {
-        return "Confirm receipt once you have received the order to release funds.";
+        return `Confirm receipt once you have received the order to release funds.${netHint}`;
       }
       if (participantRole === "seller") {
-        return "Waiting for the buyer to confirm receipt.";
+        return `Waiting for the buyer to confirm receipt.${netHint}`;
       }
       return null;
     case "completed":
       return "This deal is complete.";
     case "disputed":
-      return "A dispute is open. A mediator will review this deal.";
+      return `A dispute is open. A mediator will review this deal.${netHint}`;
     case "expired":
       if (participantRole === "buyer") {
         return "The payment window expired. Retry payment to get a new QR code.";
