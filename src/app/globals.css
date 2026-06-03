@@ -81,6 +81,11 @@ body {
 }
 
 @layer base {
+  label,
+  legend {
+    @apply text-foreground;
+  }
+
   input,
   select,
   textarea {

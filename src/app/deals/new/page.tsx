@@ -81,7 +81,7 @@ export default function NewDealPage() {
           <div>
             <Label>I am the</Label>
             <div className="mt-2 flex gap-4">
-              <label className="flex items-center gap-2 text-sm">
+              <label className="flex items-center gap-2 text-sm text-foreground">
                 <input
                   type="radio"
                   checked={mySide === "buyer"}
@@ -89,7 +89,7 @@ export default function NewDealPage() {
                 />
                 Buyer
               </label>
-              <label className="flex items-center gap-2 text-sm">
+              <label className="flex items-center gap-2 text-sm text-foreground">
                 <input
                   type="radio"
                   checked={mySide === "seller"}
@@ -150,7 +150,9 @@ export default function NewDealPage() {
             Review: You will be the <strong>{mySide}</strong>. Counterparty must
             already be registered.
           </p>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && (
+            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          )}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Creating…" : "Create deal"}
           </Button>

@@ -81,7 +81,9 @@ export function ForgotPasswordForm() {
               {linkError}
             </p>
           )}
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && (
+            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          )}
           {sent && (
             <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
               If an account exists for this email, we sent a reset link. Check

@@ -132,7 +132,9 @@ export default function ResetPasswordPage() {
           <CardTitle>Reset password</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && (
+            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          )}
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             This link is invalid or has expired. Request a new reset email.
           </p>
@@ -186,7 +188,9 @@ export default function ResetPasswordPage() {
               autoComplete="new-password"
             />
           </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && (
+            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          )}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Saving…" : "Update password"}
           </Button>

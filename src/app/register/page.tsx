@@ -42,9 +42,10 @@ function statusMessage(
 }
 
 function statusClass(status: AvailabilityStatus): string {
-  if (status === "available") return "text-emerald-700";
-  if (status === "taken" || status === "invalid") return "text-red-600";
-  if (status === "checking") return "text-zinc-500";
+  if (status === "available") return "text-emerald-700 dark:text-emerald-400";
+  if (status === "taken" || status === "invalid")
+    return "text-red-600 dark:text-red-400";
+  if (status === "checking") return "text-zinc-500 dark:text-zinc-400";
   return "";
 }
 
