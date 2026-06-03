@@ -9,14 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAuthCallbackUrl } from "@/lib/config/site-url";
-import type { ProfileRole } from "@/lib/types/database";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [role, setRole] = useState<ProfileRole>("buyer");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
@@ -31,7 +29,7 @@ export default function RegisterPage() {
       email,
       password,
       options: {
-        data: { display_name: displayName, role },
+        data: { display_name: displayName },
         emailRedirectTo: getAuthCallbackUrl(),
       },
     });
@@ -86,22 +84,9 @@ export default function RegisterPage() {
               minLength={6}
             />
           </div>
-          <div>
-            <Label>Default role (for new deals)</Label>
-            <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:gap-4">
-              {(["buyer", "seller", "mediator"] as ProfileRole[]).map((r) => (
-                <label key={r} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="radio"
-                    name="role"
-                    checked={role === r}
-                    onChange={() => setRole(r)}
-                  />
-                  <span className="capitalize">{r}</span>
-                </label>
-              ))}
-            </div>
-          </div>
+          <p className="text-sm text-zinc-600">
+            You&apos;ll choose buyer or seller when creating a deal.
+          </p>
           {error && <p className="text-sm text-red-600">{error}</p>}
           {checkEmail && (
             <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">

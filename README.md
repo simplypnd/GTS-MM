@@ -14,9 +14,10 @@ Pseudo-escrow webapp: buyers pay via **PayMongo QR Ph**, funds stay on your plat
 
 1. Create a project at [supabase.com](https://supabase.com).
 2. Run the SQL in [`supabase/migrations/001_initial.sql`](supabase/migrations/001_initial.sql) in the SQL editor.
-3. Enable **Realtime** for the `messages` table (migration adds it to publication).
-4. Copy URL, anon key, and service role key.
-5. Under **Authentication → URL Configuration**, set:
+3. Run [`supabase/migrations/002_signup_no_public_role.sql`](supabase/migrations/002_signup_no_public_role.sql) (locks signup roles; admin-only mediators).
+4. Enable **Realtime** for the `messages` table (migration adds it to publication).
+5. Copy URL, anon key, and service role key.
+6. Under **Authentication → URL Configuration**, set:
    - **Site URL:** `https://app.gtseller.shop` (or your production domain)
    - **Redirect URLs:** `https://app.gtseller.shop/auth/callback`
    - For local dev, also add: `http://localhost:3000/auth/callback`
@@ -46,23 +47,26 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Test flow
 
-1. Register three users: buyer, seller, mediator (register with role **mediator**, then confirm `is_mediator` in DB or run seed).
-2. Seller and buyer add payout accounts under **Settings → Payouts**.
-3. Buyer or seller creates a deal, invites counterparty by email.
+1. Register two users (no role selection at signup).
+2. Each user adds payout accounts under **Settings → Payouts** as needed.
+3. Create deals via **New deal** — pick **I am Buyer** or **I am Seller** per deal; invite counterparty by email.
 4. Start payment → buyer generates QR Ph and pays (test mode).
 5. Webhook marks deal **funded**; chat and ship/confirm actions unlock.
 6. Buyer confirms → release to seller, or open dispute → mediator resolves.
 
-### Promote a mediator
+### Promote a mediator (admin only)
+
+Run in **Supabase Dashboard → SQL Editor** (not available in the public app):
 
 ```sql
-UPDATE profiles SET is_mediator = TRUE, role = 'mediator'
-WHERE id = '<user-uuid>';
+UPDATE profiles SET is_mediator = TRUE WHERE id = '<user-uuid>';
 ```
+
+Users cannot set `is_mediator` on themselves; the database rejects self-updates to that field.
 
 ## Architecture notes
 
-- **Buyer/seller** are fixed per deal (`deals.buyer_id`, `deals.seller_id`); immutable after payment starts.
+- **Buyer/seller** are chosen per deal when creating a deal; the same user can be buyer on one deal and seller on another.
 - Payout bank details live in **`payout_accounts`** (not PayMongo saved beneficiaries).
 - PayMongo receives full `destination_account` on each `batch_transfers` call.
 
