@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PublicProfileView } from "@/components/profile/PublicProfileView";
+import { StarRatingDisplay } from "@/components/profile/StarRatingDisplay";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getSiteUrl } from "@/lib/seo/siteUrl";
 import { profilePath } from "@/lib/utils";
@@ -97,7 +98,7 @@ export default async function PublicProfilePage({ params }: Props) {
                 key={`${r.created_at}-${i}`}
                 className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
               >
-                <p className="font-medium">{r.rating}/5 stars</p>
+                <StarRatingDisplay rating={r.rating} />
                 <p className="text-sm text-zinc-600 dark:text-zinc-400">
                   {r.deal_title}
                 </p>

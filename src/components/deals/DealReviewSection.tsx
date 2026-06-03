@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { StarRatingDisplay } from "@/components/profile/StarRatingDisplay";
 import type { DealReview } from "@/lib/types/database";
 
 export function DealReviewSection({
@@ -26,9 +27,11 @@ export function DealReviewSection({
     return (
       <div className="rounded-lg border border-zinc-200 p-4 text-sm dark:border-zinc-800">
         <p className="font-medium">Buyer review</p>
-        <p className="mt-1 text-zinc-600 dark:text-zinc-400">
-          {existingReview.rating}/5 stars
-          {existingReview.comment ? ` — ${existingReview.comment}` : ""}
+        <p className="mt-1 flex flex-wrap items-center gap-2 text-zinc-600 dark:text-zinc-400">
+          <StarRatingDisplay rating={existingReview.rating} />
+          {existingReview.comment ? (
+            <span>— {existingReview.comment}</span>
+          ) : null}
         </p>
       </div>
     );
@@ -42,7 +45,9 @@ export function DealReviewSection({
     return (
       <div className="rounded-lg border border-zinc-200 p-4 text-sm dark:border-zinc-800">
         <p className="font-medium">Your review</p>
-        <p className="mt-1">You rated {existingReview.rating}/5</p>
+        <p className="mt-1 flex items-center gap-2">
+          You rated <StarRatingDisplay rating={existingReview.rating} />
+        </p>
         {existingReview.comment && (
           <p className="mt-1 text-zinc-600 dark:text-zinc-400">
             {existingReview.comment}
