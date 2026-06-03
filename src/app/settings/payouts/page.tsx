@@ -97,7 +97,7 @@ function PayoutForm({ partyRole, label }: { partyRole: PartyRole; label: string 
           <div>
             <Label>Bank</Label>
             <select
-              className="flex h-10 w-full rounded-lg border border-zinc-300 px-3 text-sm"
+              className="flex h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900"
               value={bankBic}
               onChange={(e) => {
                 setBankBic(e.target.value);
