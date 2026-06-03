@@ -162,11 +162,20 @@ export function Navbar() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [menuOpen]);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [menuOpen]);
+
   const isPasswordResetFlow =
     pathname.startsWith("/reset-password") && isRecoveryUser(user);
 
   return (
-    <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+    <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
         {isPasswordResetFlow ? (
           <span className="font-semibold text-zinc-900 dark:text-zinc-100">
@@ -205,15 +214,17 @@ export function Navbar() {
             aria-label="Close menu"
             onClick={() => setMenuOpen(false)}
           />
-          <nav className="relative z-50 border-t border-zinc-200 px-4 py-3 motion-safe:animate-fade-in motion-reduce:animate-none origin-top dark:border-zinc-800 max-h-[calc(100vh-3.5rem)] overflow-y-auto">
-            <div className="flex flex-col gap-1 text-sm">
-              <NavLinks
-                user={user}
-                isMediator={isMediator}
-                displayName={displayName}
-                onNavigate={() => setMenuOpen(false)}
-                onSignOut={handleSignOut}
-              />
+          <nav className="fixed left-0 right-0 top-14 z-50 max-h-[calc(100vh-3.5rem)] overflow-y-auto border-b border-zinc-200 bg-white shadow-md motion-safe:animate-fade-in motion-reduce:animate-none origin-top dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="mx-auto max-w-5xl px-4 py-3">
+              <div className="flex flex-col gap-1 text-sm">
+                <NavLinks
+                  user={user}
+                  isMediator={isMediator}
+                  displayName={displayName}
+                  onNavigate={() => setMenuOpen(false)}
+                  onSignOut={handleSignOut}
+                />
+              </div>
             </div>
           </nav>
         </>
