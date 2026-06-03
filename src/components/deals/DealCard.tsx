@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatPHP } from "@/lib/utils";
+import { interactiveCard } from "@/lib/motion";
+import { cn, formatPHP } from "@/lib/utils";
 import { STATUS_LABELS } from "@/lib/escrow/dealState";
 import type { Deal, DealStatus } from "@/lib/types/database";
 
@@ -16,7 +17,7 @@ function statusVariant(status: DealStatus) {
 export function DealCard({ deal, myRole }: { deal: Deal; myRole?: string }) {
   return (
     <Link href={`/deals/${deal.id}`}>
-      <Card className="transition-shadow hover:shadow-md">
+      <Card className={cn(interactiveCard)}>
         <CardHeader>
           <div className="flex items-start justify-between gap-2">
             <CardTitle className="line-clamp-1">{deal.title}</CardTitle>

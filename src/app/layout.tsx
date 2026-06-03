@@ -20,8 +20,12 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "GTS MM",
-  description: "Peer deals with MidMan protection, wallet balance, and PayMongo QR Ph",
+  title: {
+    default: "GTS MM | Secure Online Deals with MidMan",
+    template: "%s | GTS MM",
+  },
+  description:
+    "Secure buyer and seller deals in the Philippines with MidMan fund protection, QR Ph, and wallet withdrawals.",
 };
 
 export default function RootLayout({
@@ -30,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en-PH">
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-zinc-50 font-sans text-zinc-900 antialiased`}
       >

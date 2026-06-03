@@ -87,7 +87,8 @@ Open [http://localhost:3000](http://localhost:3000).
 4. Webhook or balance payment marks deal **funded**; seller taps **Delivered**.
 5. Buyer taps **Received** → seller balance is credited; withdraw at **/withdraw** (InstaPay ₱10 fee or free PESONet).
 6. Payout accounts under **Settings → Payouts** are required only for bank withdrawals.
-7. Disputes → mediator resolves; funds credit to balances.
+7. **Withdraw** — minimum ₱50.00 to bank (₱60.00 total deducted with InstaPay including ₱10 fee).
+8. Disputes → mediator resolves; funds credit to balances.
 
 ### Promote a mediator (admin only)
 
@@ -107,4 +108,4 @@ Users cannot set `is_mediator` on themselves; the database rejects self-updates 
 
 ## Compliance
 
-MidMan-style fund holding may require regulatory approval in the Philippines. Use as an MVP/internal prototype until legal review.
+Operators should ensure compliance with applicable Philippine payment and fund-holding regulations before production deployment.

@@ -52,7 +52,7 @@ export default async function DashboardPage() {
       <div className="flex flex-col gap-3 sm:flex-row">
         <Link
           href="/withdraw"
-          className="flex-1 rounded-lg border border-zinc-200 bg-white p-4"
+          className="flex-1 rounded-lg border border-zinc-200 bg-white p-4 motion-safe:transition-shadow motion-safe:hover:shadow-md"
         >
           <p className="text-sm text-zinc-600">Available balance</p>
           <p className="text-xl font-semibold">
@@ -76,8 +76,16 @@ export default async function DashboardPage() {
           <p className="text-zinc-500">No deals yet. Create one to get started.</p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
-            {dealsWithRole.map((deal) => (
-              <DealCard key={deal.id} deal={deal} myRole={deal.myRole} />
+            {dealsWithRole.map((deal, i) => (
+              <div
+                key={deal.id}
+                className="motion-safe:animate-fade-in-up motion-reduce:animate-none"
+                style={{
+                  animationDelay: `${Math.min(i * 80, 400)}ms`,
+                }}
+              >
+                <DealCard deal={deal} myRole={deal.myRole} />
+              </div>
             ))}
           </div>
         )}

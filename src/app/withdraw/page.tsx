@@ -12,8 +12,12 @@ import {
   getWithdrawalDebit,
   getWithdrawalFee,
   INSTAPAY_FEE_CENTAVOS,
+  MIN_WITHDRAWAL_CENTAVOS,
+  validateWithdrawalAmount,
   type WithdrawalProvider,
 } from "@/lib/wallet/withdrawal";
+import { sectionEnter } from "@/lib/motion";
+import { LoadingSpinner } from "@/components/ui/spinner";
 import { formatPHP } from "@/lib/utils";
 import type { PartyRole } from "@/lib/types/database";
 
@@ -80,8 +84,9 @@ export default function WithdrawPage() {
   const feeCentavos = getWithdrawalFee(provider);
   const totalDebit =
     amountCentavos > 0 ? getWithdrawalDebit(amountCentavos, provider) : 0;
+  const amountValidation = validateWithdrawalAmount(amountCentavos, provider);
   const canSubmit =
-    amountCentavos > 0 &&
+    amountValidation.ok &&
     totalDebit <= balanceCentavos &&
     ((partyRole === "seller" && hasSellerAccount) ||
       (partyRole === "buyer" && hasBuyerAccount));
@@ -123,7 +128,7 @@ export default function WithdrawPage() {
         </p>
       </div>
 
-      <Card>
+      <Card className={sectionEnter}>
         <CardHeader>
           <CardTitle className="text-base">Available balance</CardTitle>
         </CardHeader>
@@ -143,13 +148,17 @@ export default function WithdrawPage() {
               <Input
                 id="amount"
                 type="number"
-                min="0"
+                min={MIN_WITHDRAWAL_CENTAVOS / 100}
                 step="0.01"
                 value={amountPesos}
                 onChange={(e) => setAmountPesos(e.target.value)}
-                placeholder="0.00"
+                placeholder="50.00"
                 required
               />
+              <p className="mt-1 text-xs text-zinc-500">
+                Minimum ₱50.00 to receive. InstaPay deducts ₱60.00 total (₱50 +
+                ₱10 fee). PESONet deducts ₱50.00.
+              </p>
             </div>
 
             <div>
@@ -212,6 +221,9 @@ export default function WithdrawPage() {
                 {feeCentavos > 0 && ` (includes ${formatPHP(feeCentavos)} fee)`}
               </p>
             )}
+            {amountCentavos > 0 && !amountValidation.ok && (
+              <p className="text-sm text-red-600">{amountValidation.error}</p>
+            )}
 
             {!hasSellerAccount && !hasBuyerAccount && (
               <p className="text-sm text-amber-800">
@@ -223,8 +235,20 @@ export default function WithdrawPage() {
               </p>
             )}
 
-            <Button type="submit" disabled={loading || !canSubmit} className="w-full">
-              {loading ? "Processing…" : "Withdraw"}
+            <Button
+              type="submit"
+              disabled={loading || !canSubmit}
+              className="w-full"
+              aria-busy={loading}
+            >
+              {loading ? (
+                <span className="inline-flex items-center gap-2">
+                  <LoadingSpinner />
+                  Processing…
+                </span>
+              ) : (
+                "Withdraw"
+              )}
             </Button>
 
             {message && (

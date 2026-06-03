@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { maskAccountNumber } from "@/lib/utils";
+import { sectionEnter } from "@/lib/motion";
 import type { PayoutAccount, PartyRole } from "@/lib/types/database";
 
 function PayoutForm({ partyRole, label }: { partyRole: PartyRole; label: string }) {
@@ -19,6 +20,8 @@ function PayoutForm({ partyRole, label }: { partyRole: PartyRole; label: string 
   const [institutions, setInstitutions] = useState<
     Array<{ provider_code: string; name: string }>
   >([]);
+  const [institutionsLoading, setInstitutionsLoading] = useState(true);
+  const [institutionsError, setInstitutionsError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/payouts")
@@ -35,9 +38,24 @@ function PayoutForm({ partyRole, label }: { partyRole: PartyRole; label: string 
           setBankName(acc.bank_name ?? "");
         }
       });
+
+    setInstitutionsLoading(true);
+    setInstitutionsError(null);
     fetch("/api/institutions")
       .then((r) => r.json())
-      .then((data) => setInstitutions(data.institutions ?? []));
+      .then((data) => {
+        if (data.error) {
+          setInstitutionsError(data.error);
+          setInstitutions([]);
+        } else {
+          setInstitutions(data.institutions ?? []);
+        }
+      })
+      .catch(() => {
+        setInstitutionsError("Could not load bank list.");
+        setInstitutions([]);
+      })
+      .finally(() => setInstitutionsLoading(false));
   }, [partyRole]);
 
   async function save(e: React.FormEvent) {
@@ -66,7 +84,7 @@ function PayoutForm({ partyRole, label }: { partyRole: PartyRole; label: string 
   }
 
   return (
-    <Card>
+    <Card className={sectionEnter}>
       <CardHeader>
         <CardTitle className="text-base">{label}</CardTitle>
       </CardHeader>
@@ -96,32 +114,47 @@ function PayoutForm({ partyRole, label }: { partyRole: PartyRole; label: string 
           </div>
           <div>
             <Label>Bank</Label>
-            <select
-              className="flex h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900"
-              value={bankBic}
-              onChange={(e) => {
-                setBankBic(e.target.value);
-                const inst = institutions.find(
-                  (i) => i.provider_code === e.target.value
-                );
-                setBankName(inst?.name ?? "");
-              }}
-              required
-            >
-              <option value="">Select bank…</option>
-              {institutions.map((i) => (
-                <option key={i.provider_code} value={i.provider_code}>
-                  {i.name}
-                </option>
-              ))}
-            </select>
-            {!institutions.length && (
-              <Input
-                className="mt-2"
-                placeholder="Bank BIC (manual)"
+            {institutionsLoading ? (
+              <p className="mt-2 text-sm text-zinc-500">Loading banks…</p>
+            ) : institutions.length > 0 ? (
+              <select
+                className="mt-1 flex h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 transition-colors focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
                 value={bankBic}
-                onChange={(e) => setBankBic(e.target.value)}
-              />
+                onChange={(e) => {
+                  setBankBic(e.target.value);
+                  const inst = institutions.find(
+                    (i) => i.provider_code === e.target.value
+                  );
+                  setBankName(inst?.name ?? "");
+                }}
+                required
+              >
+                <option value="">Select bank…</option>
+                {institutions.map((i) => (
+                  <option key={i.provider_code} value={i.provider_code}>
+                    {i.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <>
+                {institutionsError && (
+                  <p className="mt-1 text-sm text-amber-800">{institutionsError}</p>
+                )}
+                <Input
+                  className="mt-2"
+                  placeholder="Bank BIC (e.g. BOPIPHMM)"
+                  value={bankBic}
+                  onChange={(e) => setBankBic(e.target.value)}
+                  required
+                />
+                <Input
+                  className="mt-2"
+                  placeholder="Bank name"
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
+                />
+              </>
             )}
           </div>
           {message && (
@@ -131,7 +164,7 @@ function PayoutForm({ partyRole, label }: { partyRole: PartyRole; label: string 
               {message}
             </p>
           )}
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" disabled={loading} aria-busy={loading}>
             Save {partyRole} account
           </Button>
         </form>
@@ -145,16 +178,16 @@ export default function PayoutsSettingsPage() {
     <div className="mx-auto max-w-lg space-y-6">
       <h1 className="text-2xl font-bold">Payout accounts</h1>
       <p className="text-sm text-zinc-600">
-        Stored securely in our database and sent to PayMongo only when a
-        release or refund is executed.
+        Add the bank account where you want to receive withdrawals from your GTS
+        MM balance.
       </p>
       <PayoutForm
         partyRole="seller"
-        label="Payout account as Seller (releases)"
+        label="Payout account as Seller"
       />
       <PayoutForm
         partyRole="buyer"
-        label="Refund account as Buyer (dispute refunds)"
+        label="Refund account as Buyer"
       />
     </div>
   );

@@ -3,6 +3,9 @@
 :root {
   --background: #fafafa;
   --foreground: #18181b;
+  --motion-duration-fast: 150ms;
+  --motion-duration-normal: 250ms;
+  --motion-ease: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @theme inline {
@@ -10,6 +13,50 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --animate-fade-in: fade-in var(--motion-duration-normal) var(--motion-ease) both;
+  --animate-fade-in-up: fade-in-up var(--motion-duration-normal) var(--motion-ease) both;
+  --animate-scale-in: scale-in var(--motion-duration-fast) var(--motion-ease) both;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 html {

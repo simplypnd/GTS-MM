@@ -166,7 +166,7 @@ export function Navbar() {
       </div>
 
       {menuOpen && !isPasswordResetFlow && (
-        <nav className="border-t border-zinc-200 px-4 py-3 md:hidden">
+        <nav className="border-t border-zinc-200 px-4 py-3 md:hidden motion-safe:animate-fade-in motion-reduce:animate-none origin-top">
           <div className="flex flex-col gap-1 text-sm">
             <NavLinks
               user={user}

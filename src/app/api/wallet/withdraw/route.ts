@@ -5,6 +5,7 @@ import { executePaymongoWithdrawal } from "@/lib/paymongo/payout";
 import {
   getWithdrawalDebit,
   getWithdrawalFee,
+  validateWithdrawalAmount,
   type WithdrawalProvider,
 } from "@/lib/wallet/withdrawal";
 import type { PartyRole } from "@/lib/types/database";
@@ -27,16 +28,17 @@ export async function POST(request: Request) {
 
   const { amount_centavos, provider, party_role, idempotency_key } = body;
 
-  if (!amount_centavos || amount_centavos <= 0) {
-    return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
-  }
-
   if (provider !== "instapay" && provider !== "pesonet") {
     return NextResponse.json({ error: "Invalid provider" }, { status: 400 });
   }
 
   if (party_role !== "buyer" && party_role !== "seller") {
     return NextResponse.json({ error: "Invalid party role" }, { status: 400 });
+  }
+
+  const amountValidation = validateWithdrawalAmount(amount_centavos, provider);
+  if (!amountValidation.ok) {
+    return NextResponse.json({ error: amountValidation.error }, { status: 400 });
   }
 
   const service = await createServiceClient();

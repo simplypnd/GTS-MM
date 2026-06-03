@@ -8,6 +8,8 @@ import {
   getStatusLabel,
   statusBadgeVariant,
 } from "@/lib/deals/statusGuidance";
+import { sectionEnter } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 import type { Deal, DealStatus, ParticipantRole } from "@/lib/types/database";
 
 type DisputeRow = {
@@ -49,7 +51,7 @@ export function DealStatusSection({
 
   return (
     <section>
-      <Card>
+      <Card className={cn(sectionEnter)}>
         <CardHeader>
           <CardTitle>Status</CardTitle>
         </CardHeader>
@@ -74,12 +76,14 @@ export function DealStatusSection({
           )}
 
           {showQr && (
+            <div className={cn("motion-safe:animate-fade-in motion-reduce:animate-none")}>
             <QrPaymentClient
               dealId={deal.id}
               initialQrUrl={paymentQr.qr_image_url}
               initialExpiresAt={paymentQr.expires_at}
               embedded
             />
+            </div>
           )}
 
           <DealActions

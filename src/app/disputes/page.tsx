@@ -56,7 +56,7 @@ export default async function DisputesPage() {
             const dealId = (deal?.id as string) ?? (d.deal_id as string);
             return (
               <Link key={d.id as string} href={`/deals/${dealId}`}>
-                <Card className="hover:shadow-md transition-shadow">
+                <Card className="transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md motion-safe:transition-all motion-reduce:transform-none">
                   <CardHeader>
                     <CardTitle className="text-base">
                       {(deal?.title as string) ?? "Deal"}

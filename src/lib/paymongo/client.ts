@@ -160,10 +160,68 @@ export async function getTransfer(transferId: string) {
   );
 }
 
-export async function listReceivingInstitutions(provider = "instapay") {
-  return paymongoFetch<{
-    data: Array<{ provider_code: string; name: string }>;
-  }>(`/v1/wallets/receiving_institutions?provider=${provider}`);
+export type ReceivingInstitution = {
+  provider_code: string;
+  name: string;
+};
+
+type InstitutionRaw = {
+  id?: string;
+  attributes?: Record<string, string>;
+  provider_code?: string;
+  name?: string;
+  bic?: string;
+  provider_name?: string;
+};
+
+function normalizeInstitutionItem(item: InstitutionRaw): ReceivingInstitution | null {
+  const attrs = item.attributes ?? item;
+  const provider_code =
+    attrs.provider_code ?? attrs.bic ?? item.provider_code ?? "";
+  const name = attrs.name ?? attrs.provider_name ?? item.name ?? "";
+  if (!provider_code || !name) return null;
+  return { provider_code, name };
+}
+
+function normalizeInstitutionsResponse(
+  data: unknown
+): ReceivingInstitution[] {
+  if (!Array.isArray(data)) return [];
+  const mapped = data
+    .map((item) => normalizeInstitutionItem(item as InstitutionRaw))
+    .filter((i): i is ReceivingInstitution => i !== null);
+  const byCode = new Map<string, ReceivingInstitution>();
+  for (const inst of mapped) {
+    byCode.set(inst.provider_code, inst);
+  }
+  return [...byCode.values()].sort((a, b) =>
+    a.name.localeCompare(b.name, "en", { sensitivity: "base" })
+  );
+}
+
+export async function listReceivingInstitutions(
+  provider: "instapay" | "pesonet" = "instapay"
+): Promise<ReceivingInstitution[]> {
+  const result = await paymongoFetch<{ data: unknown }>(
+    `/v1/wallets/receiving_institutions?provider=${provider}`
+  );
+  return normalizeInstitutionsResponse(result.data);
+}
+
+export async function listAllReceivingInstitutions(): Promise<
+  ReceivingInstitution[]
+> {
+  const [instapay, pesonet] = await Promise.all([
+    listReceivingInstitutions("instapay").catch(() => [] as ReceivingInstitution[]),
+    listReceivingInstitutions("pesonet").catch(() => [] as ReceivingInstitution[]),
+  ]);
+  const byCode = new Map<string, ReceivingInstitution>();
+  for (const inst of [...instapay, ...pesonet]) {
+    byCode.set(inst.provider_code, inst);
+  }
+  return [...byCode.values()].sort((a, b) =>
+    a.name.localeCompare(b.name, "en", { sensitivity: "base" })
+  );
 }
 
 export { verifyWebhookSignature } from "@/lib/paymongo/webhook";
