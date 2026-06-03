@@ -1,8 +1,16 @@
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <div className="space-y-8">
       <section className="text-center">
@@ -15,14 +23,29 @@ export default function HomePage() {
           their bank account.
         </p>
         <div className="mt-6 flex justify-center gap-4">
-          <Link href="/register">
-            <Button size="lg">Get started</Button>
-          </Link>
-          <Link href="/login">
-            <Button variant="outline" size="lg">
-              Log in
-            </Button>
-          </Link>
+          {user ? (
+            <>
+              <Link href="/dashboard">
+                <Button size="lg">Go to dashboard</Button>
+              </Link>
+              <Link href="/deals/new">
+                <Button variant="outline" size="lg">
+                  Create deal
+                </Button>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/register">
+                <Button size="lg">Get started</Button>
+              </Link>
+              <Link href="/login">
+                <Button variant="outline" size="lg">
+                  Log in
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </section>
 

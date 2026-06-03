@@ -16,6 +16,12 @@ Pseudo-escrow webapp: buyers pay via **PayMongo QR Ph**, funds stay on your plat
 2. Run the SQL in [`supabase/migrations/001_initial.sql`](supabase/migrations/001_initial.sql) in the SQL editor.
 3. Enable **Realtime** for the `messages` table (migration adds it to publication).
 4. Copy URL, anon key, and service role key.
+5. Under **Authentication → URL Configuration**, set:
+   - **Site URL:** `https://app.gtseller.shop` (or your production domain)
+   - **Redirect URLs:** `https://app.gtseller.shop/auth/callback`
+   - For local dev, also add: `http://localhost:3000/auth/callback`
+
+   If Site URL is still `http://localhost:3000`, confirmation emails will redirect to localhost even in production.
 
 ### 2. PayMongo
 
@@ -26,6 +32,8 @@ Pseudo-escrow webapp: buyers pay via **PayMongo QR Ph**, funds stay on your plat
 ### 3. Environment
 
 Copy [`.env.example`](.env.example) to `.env.local` and fill in values.
+
+Set `NEXT_PUBLIC_APP_URL` to your public app URL (e.g. `https://app.gtseller.shop`). This is used for email confirmation redirects and PayMongo webhooks.
 
 ### 4. Run
 

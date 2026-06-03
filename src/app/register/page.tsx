@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getAuthCallbackUrl } from "@/lib/config/site-url";
 import type { ProfileRole } from "@/lib/types/database";
 
 export default function RegisterPage() {
@@ -18,21 +19,29 @@ export default function RegisterPage() {
   const [role, setRole] = useState<ProfileRole>("buyer");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [checkEmail, setCheckEmail] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setCheckEmail(false);
     const supabase = createClient();
-    const { error: authError } = await supabase.auth.signUp({
+    const { data, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { display_name: displayName, role },
+        emailRedirectTo: getAuthCallbackUrl(),
       },
     });
     if (authError) {
       setError(authError.message);
+      setLoading(false);
+      return;
+    }
+    if (!data.session) {
+      setCheckEmail(true);
       setLoading(false);
       return;
     }
@@ -94,6 +103,12 @@ export default function RegisterPage() {
             </div>
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
+          {checkEmail && (
+            <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+              Check your email to confirm your account. After confirming, you
+              will be redirected to the dashboard.
+            </p>
+          )}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Creating…" : "Register"}
           </Button>
