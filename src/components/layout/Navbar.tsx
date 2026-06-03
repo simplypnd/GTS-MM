@@ -12,11 +12,13 @@ import { cn } from "@/lib/utils";
 
 function NavLinks({
   user,
+  isMediator,
   onNavigate,
   onSignOut,
   className,
 }: {
   user: User | null;
+  isMediator: boolean;
   onNavigate?: () => void;
   onSignOut: () => Promise<void>;
   className?: string;
@@ -33,12 +35,17 @@ function NavLinks({
         <Link href="/deals/new" className={cn(linkClass, className)} onClick={onNavigate}>
           New deal
         </Link>
+        <Link href="/withdraw" className={cn(linkClass, className)} onClick={onNavigate}>
+          Withdraw
+        </Link>
         <Link href="/settings/payouts" className={cn(linkClass, className)} onClick={onNavigate}>
           Payouts
         </Link>
-        <Link href="/disputes" className={cn(linkClass, className)} onClick={onNavigate}>
-          Disputes
-        </Link>
+        {isMediator && (
+          <Link href="/disputes" className={cn(linkClass, className)} onClick={onNavigate}>
+            Disputes
+          </Link>
+        )}
         <Button
           type="button"
           variant="ghost"
@@ -74,20 +81,35 @@ function NavLinks({
 export function Navbar() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [isMediator, setIsMediator] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
     const supabase = createClient();
 
-    supabase.auth.getUser().then(({ data: { user: currentUser } }) => {
+    async function loadUser(currentUser: User | null) {
       setUser(currentUser);
+      if (!currentUser) {
+        setIsMediator(false);
+        return;
+      }
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_mediator")
+        .eq("id", currentUser.id)
+        .single();
+      setIsMediator(!!profile?.is_mediator);
+    }
+
+    supabase.auth.getUser().then(({ data: { user: currentUser } }) => {
+      void loadUser(currentUser);
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      void loadUser(session?.user ?? null);
     });
 
     return () => subscription.unsubscribe();
@@ -97,6 +119,7 @@ export function Navbar() {
     const supabase = createClient();
     await supabase.auth.signOut();
     setUser(null);
+    setIsMediator(false);
     router.push("/");
     router.refresh();
   }
@@ -112,20 +135,21 @@ export function Navbar() {
     <header className="border-b border-zinc-200 bg-white">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
         {isPasswordResetFlow ? (
-          <span className="font-semibold text-zinc-900">GTS Escrow</span>
+          <span className="font-semibold text-zinc-900">GTS MM</span>
         ) : (
-          <Link
-            href={user ? "/dashboard" : "/"}
-            className="font-semibold text-zinc-900"
-          >
-            GTS Escrow
+          <Link href="/" className="font-semibold text-zinc-900">
+            GTS MM
           </Link>
         )}
 
         {!isPasswordResetFlow && (
           <>
             <nav className="hidden items-center gap-4 text-sm md:flex">
-              <NavLinks user={user} onSignOut={handleSignOut} />
+              <NavLinks
+                user={user}
+                isMediator={isMediator}
+                onSignOut={handleSignOut}
+              />
             </nav>
 
             <button
@@ -146,6 +170,7 @@ export function Navbar() {
           <div className="flex flex-col gap-1 text-sm">
             <NavLinks
               user={user}
+              isMediator={isMediator}
               onNavigate={() => setMenuOpen(false)}
               onSignOut={handleSignOut}
             />

@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { releaseToSeller, refundToBuyer } from "@/lib/escrow/transfers";
+import {
+  releaseToSeller,
+  refundToBuyer,
+  creditPartialResolution,
+} from "@/lib/escrow/transfers";
 import type { Deal } from "@/lib/types/database";
 
 export async function POST(
@@ -79,13 +83,13 @@ export async function POST(
       const sellerAmt =
         seller_amount_centavos ?? Math.floor(deal.amount_centavos / 2);
       const buyerAmt = deal.amount_centavos - sellerAmt;
-      const { executeTransfer } = await import("@/lib/escrow/transfers");
-      await executeTransfer(service, deal as Deal, "release", sellerAmt);
-      await executeTransfer(service, deal as Deal, "refund", buyerAmt);
-      await service
-        .from("deals")
-        .update({ status: "completed" })
-        .eq("id", id);
+      await creditPartialResolution(
+        service,
+        deal as Deal,
+        sellerAmt,
+        buyerAmt,
+        user.id
+      );
       await service
         .from("disputes")
         .update({

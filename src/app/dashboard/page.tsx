@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { DealCard } from "@/components/deals/DealCard";
 import { Button } from "@/components/ui/button";
+import { formatPHP } from "@/lib/utils";
 import type { Deal } from "@/lib/types/database";
 
 export default async function DashboardPage() {
@@ -48,14 +49,26 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      {profile?.is_mediator && (
+      <div className="flex flex-col gap-3 sm:flex-row">
         <Link
-          href="/disputes"
-          className="block rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+          href="/withdraw"
+          className="flex-1 rounded-lg border border-zinc-200 bg-white p-4"
         >
-          View open disputes →
+          <p className="text-sm text-zinc-600">Available balance</p>
+          <p className="text-xl font-semibold">
+            {formatPHP(profile?.balance_centavos ?? 0)}
+          </p>
         </Link>
-      )}
+        {profile?.is_mediator && (
+          <Link
+            href="/disputes"
+            className="flex-1 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+          >
+            <p className="font-medium">Open disputes</p>
+            <p className="mt-1">Review and resolve →</p>
+          </Link>
+        )}
+      </div>
 
       <section>
         <h2 className="mb-4 text-lg font-semibold">Your deals</h2>

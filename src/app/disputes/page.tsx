@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,12 +19,7 @@ export default async function DisputesPage() {
     .single();
 
   if (!profile?.is_mediator) {
-    return (
-      <p className="text-zinc-600">
-        Mediator access required. Ask an admin to set{" "}
-        <code className="text-sm">is_mediator = true</code> on your profile.
-      </p>
-    );
+    redirect("/dashboard");
   }
 
   const { data: disputes } = await supabase
@@ -41,7 +37,6 @@ export default async function DisputesPage() {
     .is("resolved_at", null)
     .order("created_at", { ascending: false });
 
-  // Fallback simpler query if join fails
   const { data: simpleDisputes } = await supabase
     .from("disputes")
     .select("*, deals(*)")

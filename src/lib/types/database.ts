@@ -11,7 +11,9 @@ export type DealStatus =
   | "cancelled";
 export type ParticipantRole = "buyer" | "seller" | "mediator";
 export type PartyRole = "buyer" | "seller";
-export type TransferType = "release" | "refund";
+export type TransferType = "release" | "refund" | "withdrawal";
+export type WithdrawalProvider = "instapay" | "pesonet";
+export type PaymentSource = "qrph" | "balance";
 
 /** display_name is the unique public username (case-insensitive). */
 export interface Profile {
@@ -20,6 +22,7 @@ export interface Profile {
   role: ProfileRole;
   is_mediator: boolean;
   phone: string | null;
+  balance_centavos: number;
   created_at: string;
   updated_at: string;
 }
@@ -36,6 +39,7 @@ export interface Deal {
   platform_fee_bps: number;
   created_by: string;
   parties_locked_at: string | null;
+  payment_source: PaymentSource | null;
   created_at: string;
   updated_at: string;
   buyer?: Profile;

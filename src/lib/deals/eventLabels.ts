@@ -4,8 +4,8 @@ const EVENT_LABELS: Record<string, string> = {
   payment_paid: "Payment received",
   delivered: "Marked as delivered",
   shipped: "Marked as shipped",
-  released: "Funds released to seller",
-  refunded: "Funds refunded",
+  released: "Credited to seller balance",
+  refunded: "Credited to buyer balance",
   disputed: "Dispute opened",
   resolved: "Dispute resolved",
 };

@@ -22,6 +22,7 @@ export function DealStatusSection({
   dispute,
   paymentQr,
   currentUserId,
+  buyerBalanceCentavos,
 }: {
   deal: Deal;
   participantRole: ParticipantRole | null;
@@ -32,9 +33,15 @@ export function DealStatusSection({
     expires_at: string | null;
   } | null;
   currentUserId: string;
+  buyerBalanceCentavos?: number | null;
 }) {
   const status = deal.status as DealStatus;
-  const guidance = getStatusGuidance(status, participantRole);
+  const canPayWithBalance =
+    deal.buyer_id === currentUserId &&
+    (buyerBalanceCentavos ?? 0) >= deal.amount_centavos;
+  const guidance = getStatusGuidance(status, participantRole, {
+    canPayWithBalance,
+  });
   const showQr =
     status === "awaiting_payment" &&
     deal.buyer_id === currentUserId &&
@@ -79,6 +86,7 @@ export function DealStatusSection({
             deal={deal}
             participantRole={participantRole}
             isMediator={isMediator}
+            buyerBalanceCentavos={buyerBalanceCentavos}
           />
 
           <DealStatusFeed dealId={deal.id} />

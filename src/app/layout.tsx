@@ -20,8 +20,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "GTS Escrow",
-  description: "Pseudo-escrow marketplace with PayMongo QR Ph",
+  title: "GTS MM",
+  description: "Peer deals with MidMan protection, wallet balance, and PayMongo QR Ph",
 };
 
 export default function RootLayout({

@@ -41,7 +41,7 @@ export async function markDealFunded(
   await postSystemMessage(
     service,
     dealId,
-    "Payment received. Funds are held in escrow."
+    "Payment received. Funds are held by MidMan."
   );
 
   return { updated: true, status: "funded" as const };

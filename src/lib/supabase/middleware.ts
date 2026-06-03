@@ -51,7 +51,8 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/dashboard") ||
     request.nextUrl.pathname.startsWith("/deals") ||
     request.nextUrl.pathname.startsWith("/disputes") ||
-    request.nextUrl.pathname.startsWith("/settings");
+    request.nextUrl.pathname.startsWith("/settings") ||
+    request.nextUrl.pathname.startsWith("/withdraw");
 
   if (user && isRecoveryUser(user)) {
     if (!request.nextUrl.pathname.startsWith("/reset-password")) {
@@ -76,10 +77,18 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && request.nextUrl.pathname === "/") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
+  if (user && request.nextUrl.pathname.startsWith("/disputes")) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_mediator")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile?.is_mediator) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;

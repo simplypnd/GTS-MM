@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { PartyStrip } from "@/components/deals/PartyStrip";
 import { DealChat } from "@/components/deals/DealChat";
 import { DealStatusSection } from "@/components/deals/DealStatusSection";
-import { formatPHP, maskAccountNumber } from "@/lib/utils";
+import { formatPHP } from "@/lib/utils";
 import type { Deal, Profile, ParticipantRole } from "@/lib/types/database";
 
 export default async function DealDetailPage({
@@ -47,7 +47,7 @@ export default async function DealDetailPage({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("is_mediator")
+    .select("is_mediator, balance_centavos")
     .eq("id", user.id)
     .single();
 
@@ -57,27 +57,6 @@ export default async function DealDetailPage({
     .eq("deal_id", id)
     .maybeSingle();
 
-  let sellerPayout = null;
-  let buyerPayout = null;
-  if (deal.status === "disputed" && profile?.is_mediator) {
-    const service = await createServiceClient();
-    const { data: sp } = await service
-      .from("payout_accounts")
-      .select("account_number, account_name")
-      .eq("user_id", deal.seller_id)
-      .eq("party_role", "seller")
-      .eq("is_default", true)
-      .maybeSingle();
-    const { data: bp } = await service
-      .from("payout_accounts")
-      .select("account_number, account_name")
-      .eq("user_id", deal.buyer_id)
-      .eq("party_role", "buyer")
-      .eq("is_default", true)
-      .maybeSingle();
-    sellerPayout = sp;
-    buyerPayout = bp;
-  }
 
   const participantRole = (participant?.role ?? null) as ParticipantRole | null;
   const typedDeal = deal as Deal;
@@ -116,22 +95,17 @@ export default async function DealDetailPage({
         dispute={dispute}
         paymentQr={paymentQr}
         currentUserId={user.id}
+        buyerBalanceCentavos={
+          deal.buyer_id === user.id ? profile?.balance_centavos : null
+        }
       />
 
       {deal.status === "disputed" && profile?.is_mediator && (
-        <div className="rounded-lg border p-4 text-sm space-y-2 break-words">
-          <p className="font-medium text-zinc-900">Mediator payout details</p>
-          <p>
-            Release to Seller ({seller?.display_name}):{" "}
-            {sellerPayout
-              ? `${sellerPayout.account_name} ${maskAccountNumber(sellerPayout.account_number)}`
-              : "No payout account — seller must add one"}
-          </p>
-          <p>
-            Refund to Buyer ({buyer?.display_name}):{" "}
-            {buyerPayout
-              ? `${buyerPayout.account_name} ${maskAccountNumber(buyerPayout.account_number)}`
-              : "No refund account — buyer must add one"}
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <p className="font-medium">Mediator resolution</p>
+          <p className="mt-1">
+            Release and refund credit party balances. They can withdraw to their
+            bank on <strong>/withdraw</strong> when ready.
           </p>
         </div>
       )}

@@ -115,6 +115,7 @@ export interface BatchTransferResponse {
 
 export async function createBatchTransfer(params: {
   amount: number;
+  provider?: "instapay" | "pesonet";
   destination: { number: string; name: string; bic: string };
   referenceNumber: string;
   description: string;
@@ -122,6 +123,7 @@ export async function createBatchTransfer(params: {
   metadata: Record<string, string>;
   idempotencyKey: string;
 }) {
+  const provider = params.provider ?? "instapay";
   const source = {
     number: process.env.PAYMONGO_WALLET_ACCOUNT_NUMBER!,
     name: process.env.PAYMONGO_WALLET_ACCOUNT_NAME!,
@@ -136,7 +138,7 @@ export async function createBatchTransfer(params: {
     body: JSON.stringify({
       transfers: [
         {
-          provider: "instapay",
+          provider,
           amount: params.amount,
           currency: "PHP",
           purpose: "Disbursement",

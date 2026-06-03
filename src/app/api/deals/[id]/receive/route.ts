@@ -43,7 +43,7 @@ export async function POST(
         error:
           e instanceof Error
             ? e.message
-            : "Release failed — ensure seller payout account is set",
+            : "Release failed",
       },
       { status: 500 }
     );

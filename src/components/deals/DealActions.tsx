@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { formatPHP } from "@/lib/utils";
 import type { Deal, DealStatus, ParticipantRole } from "@/lib/types/database";
 
 const actionBtn = "w-full sm:w-auto";
@@ -13,15 +14,21 @@ export function DealActions({
   deal,
   participantRole,
   isMediator,
+  buyerBalanceCentavos,
 }: {
   deal: Deal;
   participantRole: ParticipantRole | null;
   isMediator: boolean;
+  buyerBalanceCentavos?: number | null;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [disputeReason, setDisputeReason] = useState("");
   const [showDispute, setShowDispute] = useState(false);
+
+  const canPayWithBalance =
+    participantRole === "buyer" &&
+    (buyerBalanceCentavos ?? 0) >= deal.amount_centavos;
 
   async function action(path: string, method = "POST", body?: object) {
     setLoading(true);
@@ -36,6 +43,22 @@ export function DealActions({
       router.refresh();
     } catch (e) {
       alert(e instanceof Error ? e.message : "Action failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function payWithBalance() {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/deals/${deal.id}/pay-balance`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Payment failed");
+      router.refresh();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Payment failed");
     } finally {
       setLoading(false);
     }
@@ -86,15 +109,40 @@ export function DealActions({
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-      {status === "draft" && participantRole === "buyer" && (
-        <Button
-          disabled={loading}
-          className={actionBtn}
-          onClick={() => void startPaymentWithQr()}
-        >
-          Start payment
-        </Button>
-      )}
+      {(status === "draft" || status === "awaiting_payment") &&
+        participantRole === "buyer" && (
+          <>
+            {canPayWithBalance && (
+              <Button
+                disabled={loading}
+                className={actionBtn}
+                onClick={() => void payWithBalance()}
+              >
+                Pay with balance ({formatPHP(deal.amount_centavos)})
+              </Button>
+            )}
+            {status === "draft" && (
+              <Button
+                disabled={loading}
+                variant={canPayWithBalance ? "outline" : "default"}
+                className={actionBtn}
+                onClick={() => void startPaymentWithQr()}
+              >
+                {canPayWithBalance ? "Pay with QR Ph" : "Start payment"}
+              </Button>
+            )}
+            {status === "awaiting_payment" && (
+              <Button
+                disabled={loading}
+                variant={canPayWithBalance ? "outline" : "default"}
+                className={actionBtn}
+                onClick={() => void retryPaymentWithQr()}
+              >
+                Pay with QR Ph
+              </Button>
+            )}
+          </>
+        )}
 
       {status === "funded" && participantRole === "seller" && (
         <Button
@@ -180,13 +228,25 @@ export function DealActions({
       )}
 
       {status === "expired" && participantRole === "buyer" && (
-        <Button
-          disabled={loading}
-          className={actionBtn}
-          onClick={() => void retryPaymentWithQr()}
-        >
-          Retry payment
-        </Button>
+        <>
+          {canPayWithBalance && (
+            <Button
+              disabled={loading}
+              className={actionBtn}
+              onClick={() => void payWithBalance()}
+            >
+              Pay with balance ({formatPHP(deal.amount_centavos)})
+            </Button>
+          )}
+          <Button
+            disabled={loading}
+            variant={canPayWithBalance ? "outline" : "default"}
+            className={actionBtn}
+            onClick={() => void retryPaymentWithQr()}
+          >
+            Retry with QR Ph
+          </Button>
+        </>
       )}
     </div>
   );

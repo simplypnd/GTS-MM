@@ -7,18 +7,25 @@ export function getStatusLabel(status: DealStatus): string {
 
 export function getStatusGuidance(
   status: DealStatus,
-  participantRole: ParticipantRole | null
+  participantRole: ParticipantRole | null,
+  options?: { canPayWithBalance?: boolean }
 ): string | null {
   if (!participantRole) return null;
 
   switch (status) {
     case "draft":
       if (participantRole === "buyer") {
+        if (options?.canPayWithBalance) {
+          return "Pay with your balance or use QR Ph for this deal.";
+        }
         return "Start payment to generate a QR Ph code for the deal amount.";
       }
       return "Waiting for the buyer to start payment.";
     case "awaiting_payment":
       if (participantRole === "buyer") {
+        if (options?.canPayWithBalance) {
+          return "Pay with balance or scan the QR code below.";
+        }
         return "Scan the QR code below to pay the deal amount.";
       }
       return "Waiting for the buyer to complete payment.";

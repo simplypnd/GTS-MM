@@ -1,6 +1,6 @@
-# GTS Escrow
+# GTS MM
 
-Pseudo-escrow webapp: buyers pay via **PayMongo QR Ph**, funds stay on your platform wallet until release/refund via **batch_transfers**, with **Supabase** auth and realtime chat.
+Peer deals with **MidMan** fund protection: buyers pay via **PayMongo QR Ph** or wallet balance; funds stay held until release/refund credits party balances; withdraw to bank via **InstaPay** or **PESONet**. **Supabase** auth and realtime chat.
 
 ## Stack
 
@@ -16,6 +16,7 @@ Pseudo-escrow webapp: buyers pay via **PayMongo QR Ph**, funds stay on your plat
 2. Run the SQL in [`supabase/migrations/001_initial.sql`](supabase/migrations/001_initial.sql) in the SQL editor (once per project; skip if types/tables already exist).
 3. Run [`supabase/migrations/002_signup_no_public_role.sql`](supabase/migrations/002_signup_no_public_role.sql) (locks signup roles; admin-only mediators).
 4. Run [`supabase/migrations/003_registration_username_unique.sql`](supabase/migrations/003_registration_username_unique.sql) (unique username on `profiles.display_name`, signup trigger hardening).
+5. Run [`supabase/migrations/004_wallet_balance.sql`](supabase/migrations/004_wallet_balance.sql) (wallet balance, ledger, withdrawals).
 
    Before `003`, resolve duplicate display names if any:
 
@@ -24,9 +25,9 @@ Pseudo-escrow webapp: buyers pay via **PayMongo QR Ph**, funds stay on your plat
    GROUP BY 1 HAVING count(*) > 1;
    ```
 
-5. Enable **Realtime** for the `messages` table (migration adds it to publication).
-6. Copy URL, anon key, and service role key.
-7. Under **Authentication → URL Configuration**, set:
+6. Enable **Realtime** for the `messages` table (migration adds it to publication).
+7. Copy URL, anon key, and service role key.
+8. Under **Authentication → URL Configuration**, set:
    - **Site URL (production):** `https://app.gtseller.shop`
    - **Site URL (local dev only):** `http://localhost:3000` — switch back before shipping; if production Site URL is localhost, emails will point at localhost.
    - **Redirect URLs (add every URL you use):**
@@ -78,14 +79,15 @@ Open [http://localhost:3000](http://localhost:3000).
 1. **Register** — pick a unique username (3–30 chars, letters/numbers/underscore); UI checks username and email availability before submit.
 2. **Forgot password** — `/forgot-password` from login; open email link → set password on `/reset-password` → log in.
 
-### Escrow
+### MidMan deals
 
 1. Register two users (no role selection at signup).
-2. Each user adds payout accounts under **Settings → Payouts** as needed.
-3. Create deals via **New deal** — pick **I am Buyer** or **I am Seller** per deal; invite counterparty by email.
-4. Buyer taps **Start payment** → QR Ph is generated for the deal amount; buyer pays (test mode).
-5. Webhook marks deal **funded**; seller taps **Delivered**.
-6. Buyer taps **Received** → funds release and deal completes; or either party opens a dispute → mediator resolves.
+2. Create deals via **New deal** — pick **I am Buyer** or **I am Seller** per deal; invite counterparty by email.
+3. Buyer pays via **QR Ph** or **Pay with balance** (if balance ≥ deal amount).
+4. Webhook or balance payment marks deal **funded**; seller taps **Delivered**.
+5. Buyer taps **Received** → seller balance is credited; withdraw at **/withdraw** (InstaPay ₱10 fee or free PESONet).
+6. Payout accounts under **Settings → Payouts** are required only for bank withdrawals.
+7. Disputes → mediator resolves; funds credit to balances.
 
 ### Promote a mediator (admin only)
 
@@ -100,9 +102,9 @@ Users cannot set `is_mediator` on themselves; the database rejects self-updates 
 ## Architecture notes
 
 - **Buyer/seller** are chosen per deal when creating a deal; the same user can be buyer on one deal and seller on another.
-- Payout bank details live in **`payout_accounts`** (not PayMongo saved beneficiaries).
-- PayMongo receives full `destination_account` on each `batch_transfers` call.
+- Payout bank details live in **`payout_accounts`** (used for `/withdraw` only).
+- Deal releases credit **`profiles.balance_centavos`**; PayMongo `batch_transfers` run on withdraw.
 
 ## Compliance
 
-Escrow-like fund holding may require regulatory approval in the Philippines. Use as an MVP/internal prototype until legal review.
+MidMan-style fund holding may require regulatory approval in the Philippines. Use as an MVP/internal prototype until legal review.
