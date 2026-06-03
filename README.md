@@ -84,8 +84,8 @@ Open [http://localhost:3000](http://localhost:3000).
 2. Each user adds payout accounts under **Settings → Payouts** as needed.
 3. Create deals via **New deal** — pick **I am Buyer** or **I am Seller** per deal; invite counterparty by email.
 4. Buyer taps **Start payment** → QR Ph is generated for the deal amount; buyer pays (test mode).
-5. Webhook marks deal **funded**; buyer taps **Delivered**.
-6. Seller taps **Received** → funds release and deal completes; or either party opens a dispute → mediator resolves.
+5. Webhook marks deal **funded**; seller taps **Delivered**.
+6. Buyer taps **Received** → funds release and deal completes; or either party opens a dispute → mediator resolves.
 
 ### Promote a mediator (admin only)
 

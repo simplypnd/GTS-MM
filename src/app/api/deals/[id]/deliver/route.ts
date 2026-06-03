@@ -22,7 +22,7 @@ export async function POST(
     .eq("id", id)
     .single();
 
-  if (!deal || deal.buyer_id !== user.id) {
+  if (!deal || deal.seller_id !== user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -48,13 +48,13 @@ export async function POST(
   await logDealEvent(service, {
     dealId: id,
     actorId: user.id,
-    actorRole: "buyer",
+    actorRole: "seller",
     event: "delivered",
   });
   await postSystemMessage(
     service,
     id,
-    "Buyer marked the order as delivered."
+    "Seller marked the order as delivered."
   );
 
   return NextResponse.json({ ok: true });

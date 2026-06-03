@@ -1,12 +1,9 @@
 import { notFound } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { PartyStrip } from "@/components/deals/PartyStrip";
-import { DealActions } from "@/components/deals/DealActions";
 import { DealChat } from "@/components/deals/DealChat";
-import { QrPaymentClient } from "@/components/deals/QrPaymentClient";
-import { Badge } from "@/components/ui/badge";
+import { DealStatusSection } from "@/components/deals/DealStatusSection";
 import { formatPHP, maskAccountNumber } from "@/lib/utils";
-import { STATUS_LABELS } from "@/lib/escrow/dealState";
 import type { Deal, Profile, ParticipantRole } from "@/lib/types/database";
 
 export default async function DealDetailPage({
@@ -100,30 +97,30 @@ export default async function DealDetailPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold sm:text-2xl">{deal.title}</h1>
-          <p className="text-zinc-600">{deal.description}</p>
-        </div>
-        <Badge variant="info">{STATUS_LABELS[typedDeal.status]}</Badge>
+      <div>
+        <h1 className="text-xl font-bold sm:text-2xl">{deal.title}</h1>
+        {deal.description && (
+          <p className="mt-1 text-zinc-600">{deal.description}</p>
+        )}
+        <p className="mt-2 text-xl font-semibold sm:text-2xl">
+          {formatPHP(deal.amount_centavos)}
+        </p>
       </div>
-
-      <p className="text-xl font-semibold sm:text-2xl">{formatPHP(deal.amount_centavos)}</p>
 
       <PartyStrip buyer={buyer as Profile} seller={seller as Profile} />
 
-      {dispute && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm">
-          <p>
-            <strong>Dispute</strong> opened by{" "}
-            <Badge variant="warning">{dispute.opened_by_role}</Badge>
-          </p>
-          <p className="mt-1 text-zinc-700">{dispute.reason}</p>
-        </div>
-      )}
+      <DealStatusSection
+        deal={typedDeal}
+        participantRole={participantRole}
+        isMediator={!!profile?.is_mediator}
+        dispute={dispute}
+        paymentQr={paymentQr}
+        currentUserId={user.id}
+      />
 
       {deal.status === "disputed" && profile?.is_mediator && (
         <div className="rounded-lg border p-4 text-sm space-y-2 break-words">
+          <p className="font-medium text-zinc-900">Mediator payout details</p>
           <p>
             Release to Seller ({seller?.display_name}):{" "}
             {sellerPayout
@@ -138,22 +135,6 @@ export default async function DealDetailPage({
           </p>
         </div>
       )}
-
-      <DealActions
-        deal={typedDeal}
-        participantRole={participantRole}
-        isMediator={!!profile?.is_mediator}
-      />
-
-      {deal.status === "awaiting_payment" &&
-        deal.buyer_id === user.id &&
-        paymentQr?.qr_image_url && (
-          <QrPaymentClient
-            dealId={id}
-            initialQrUrl={paymentQr.qr_image_url}
-            initialExpiresAt={paymentQr.expires_at}
-          />
-        )}
 
       {participantRole && (
         <section>

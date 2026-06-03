@@ -22,13 +22,13 @@ export async function POST(
     .eq("id", id)
     .single();
 
-  if (!deal || deal.seller_id !== user.id) {
+  if (!deal || deal.buyer_id !== user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   if (deal.status !== "in_progress") {
     return NextResponse.json(
-      { error: "Buyer must mark delivered before you can confirm receipt" },
+      { error: "Seller must mark delivered before you can confirm receipt" },
       { status: 400 }
     );
   }
@@ -36,7 +36,7 @@ export async function POST(
   const service = await createServiceClient();
 
   try {
-    await releaseToSeller(service, deal as Deal, user.id, "seller");
+    await releaseToSeller(service, deal as Deal, user.id, "buyer");
   } catch (e) {
     return NextResponse.json(
       {

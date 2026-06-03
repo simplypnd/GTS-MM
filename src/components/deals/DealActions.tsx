@@ -96,13 +96,7 @@ export function DealActions({
         </Button>
       )}
 
-      {status === "awaiting_payment" && participantRole === "buyer" && (
-        <p className="w-full text-sm text-zinc-600">
-          Scan the QR code below to pay the deal amount.
-        </p>
-      )}
-
-      {status === "funded" && participantRole === "buyer" && (
+      {status === "funded" && participantRole === "seller" && (
         <Button
           disabled={loading}
           className={actionBtn}
@@ -112,13 +106,7 @@ export function DealActions({
         </Button>
       )}
 
-      {status === "funded" && participantRole === "seller" && (
-        <p className="w-full text-sm text-zinc-600">
-          Waiting for the buyer to mark the order as delivered.
-        </p>
-      )}
-
-      {status === "in_progress" && participantRole === "seller" && (
+      {status === "in_progress" && participantRole === "buyer" && (
         <Button
           disabled={loading}
           className={actionBtn}
@@ -126,12 +114,6 @@ export function DealActions({
         >
           Received
         </Button>
-      )}
-
-      {status === "in_progress" && participantRole === "buyer" && (
-        <p className="w-full text-sm text-zinc-600">
-          Waiting for the seller to confirm receipt.
-        </p>
       )}
 
       {(status === "funded" || status === "in_progress") &&

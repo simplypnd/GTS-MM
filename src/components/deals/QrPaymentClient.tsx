@@ -7,10 +7,12 @@ export function QrPaymentClient({
   dealId,
   initialQrUrl,
   initialExpiresAt,
+  embedded = false,
 }: {
   dealId: string;
   initialQrUrl?: string | null;
   initialExpiresAt?: string | null;
+  embedded?: boolean;
 }) {
   const router = useRouter();
   return (
@@ -18,6 +20,7 @@ export function QrPaymentClient({
       dealId={dealId}
       initialQrUrl={initialQrUrl}
       initialExpiresAt={initialExpiresAt}
+      embedded={embedded}
       onFunded={() => router.refresh()}
     />
   );
