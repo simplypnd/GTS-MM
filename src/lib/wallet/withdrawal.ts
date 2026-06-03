@@ -29,3 +29,9 @@ export function validateWithdrawalAmount(
   }
   return { ok: true };
 }
+
+export function maskAccountNumber(number: string): string {
+  const digits = number.replace(/\D/g, "");
+  if (digits.length <= 4) return digits;
+  return `••••${digits.slice(-4)}`;
+}

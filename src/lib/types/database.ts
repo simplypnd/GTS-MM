@@ -81,15 +81,44 @@ export interface DealReview {
   created_at: string;
 }
 
+export interface PublicProfileFields {
+  id: string;
+  display_name: string;
+}
+
+export interface DealPaymentQr {
+  qr_image_url: string | null;
+  expires_at: string | null;
+  status?: string;
+}
+
 export interface PublicProfileDeal {
   id: string;
   title: string;
-  amount_centavos: number;
   completed_at: string;
   role: "buyer" | "seller";
 }
 
+export interface WithdrawalTransfer {
+  id: string;
+  amount_centavos: number;
+  fee_centavos: number;
+  provider: string | null;
+  status: string;
+  reference_number: string;
+  recipient_role: PartyRole;
+  destination_snapshot: {
+    number?: string;
+    name?: string;
+    bic?: string;
+  } | null;
+  created_at: string;
+  updated_at: string;
+  transfer_id: string | null;
+}
+
 export interface PublicProfile {
+  id: string;
   display_name: string;
   member_since: string;
   positive_percent: number | null;

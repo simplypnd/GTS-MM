@@ -154,17 +154,14 @@ export function DealStatusSection({
     }
 
     async function fetchQr() {
-      const { data } = await supabase
-        .from("paymongo_payments")
-        .select("qr_image_url, expires_at")
-        .eq("deal_id", dealId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (data?.qr_image_url) {
+      const { data } = await supabase.rpc("get_deal_payment_qr", {
+        p_deal_id: dealId,
+      });
+      const row = data?.[0];
+      if (row?.qr_image_url) {
         setPaymentQr({
-          qr_image_url: data.qr_image_url,
-          expires_at: data.expires_at,
+          qr_image_url: row.qr_image_url,
+          expires_at: row.expires_at,
         });
       }
     }

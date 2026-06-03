@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ReputationSummary } from "@/components/profile/ReputationSummary";
 import { Badge } from "@/components/ui/badge";
 import { LocalizedTime } from "@/components/ui/LocalizedTime";
-import { formatPHP, profilePath } from "@/lib/utils";
+import { profilePath } from "@/lib/utils";
 import type { PublicProfile } from "@/lib/types/database";
 
 export function PublicProfileView({
@@ -48,7 +48,6 @@ export function PublicProfileView({
                 <div>
                   <p className="font-medium">{d.title}</p>
                   <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    {formatPHP(d.amount_centavos)} ·{" "}
                     <Badge variant="default" className="align-middle">
                       {d.role === "buyer" ? "Buyer" : "Seller"}
                     </Badge>

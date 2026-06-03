@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { Menu, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -11,8 +11,8 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { cn, profilePath } from "@/lib/utils";
 
-const drawerLinkClass =
-  "block rounded-lg px-3 py-3 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100";
+const dropdownLinkClass =
+  "block rounded-md px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100";
 
 function NavLinks({
   user,
@@ -29,7 +29,7 @@ function NavLinks({
   onSignOut: () => Promise<void>;
   className?: string;
 }) {
-  const linkClass = cn(drawerLinkClass, className);
+  const linkClass = cn(dropdownLinkClass, className);
 
   if (user) {
     return (
@@ -39,31 +39,58 @@ function NavLinks({
             href={profilePath(displayName)}
             className={linkClass}
             onClick={onNavigate}
+            role="menuitem"
           >
             Profile
           </Link>
         ) : null}
-        <Link href="/dashboard" className={linkClass} onClick={onNavigate}>
+        <Link
+          href="/dashboard"
+          className={linkClass}
+          onClick={onNavigate}
+          role="menuitem"
+        >
           Dashboard
         </Link>
-        <Link href="/deals/new" className={linkClass} onClick={onNavigate}>
+        <Link
+          href="/deals/new"
+          className={linkClass}
+          onClick={onNavigate}
+          role="menuitem"
+        >
           New deal
         </Link>
-        <Link href="/withdraw" className={linkClass} onClick={onNavigate}>
+        <Link
+          href="/withdraw"
+          className={linkClass}
+          onClick={onNavigate}
+          role="menuitem"
+        >
           Withdraw
         </Link>
-        <Link href="/settings/payouts" className={linkClass} onClick={onNavigate}>
+        <Link
+          href="/settings/payouts"
+          className={linkClass}
+          onClick={onNavigate}
+          role="menuitem"
+        >
           Payouts
         </Link>
         <Link
           href="/settings/appearance"
           className={linkClass}
           onClick={onNavigate}
+          role="menuitem"
         >
           Appearance
         </Link>
         {isMediator && (
-          <Link href="/disputes" className={linkClass} onClick={onNavigate}>
+          <Link
+            href="/disputes"
+            className={linkClass}
+            onClick={onNavigate}
+            role="menuitem"
+          >
             Disputes
           </Link>
         )}
@@ -71,7 +98,8 @@ function NavLinks({
           type="button"
           variant="ghost"
           size="sm"
-          className="w-full justify-start"
+          className="w-full justify-start rounded-md px-3 py-2"
+          role="menuitem"
           onClick={() => {
             onNavigate?.();
             void onSignOut();
@@ -85,13 +113,17 @@ function NavLinks({
 
   return (
     <>
-      <Link href="/login" onClick={onNavigate}>
-        <Button variant="ghost" size="sm" className="w-full justify-start">
+      <Link href="/login" onClick={onNavigate} role="menuitem">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start rounded-md px-3 py-2"
+        >
           Log in
         </Button>
       </Link>
-      <Link href="/register" onClick={onNavigate}>
-        <Button size="sm" className="w-full">
+      <Link href="/register" onClick={onNavigate} role="menuitem">
+        <Button size="sm" className="mx-3 w-[calc(100%-1.5rem)]">
           Register
         </Button>
       </Link>
@@ -101,6 +133,7 @@ function NavLinks({
 
 export function Navbar() {
   const router = useRouter();
+  const menuRef = useRef<HTMLDivElement>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isMediator, setIsMediator] = useState(false);
   const [displayName, setDisplayName] = useState<string | null>(null);
@@ -164,11 +197,13 @@ export function Navbar() {
 
   useEffect(() => {
     if (!menuOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
+    function onPointerDown(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
   }, [menuOpen]);
 
   const isPasswordResetFlow =
@@ -191,44 +226,38 @@ export function Navbar() {
         )}
 
         {!isPasswordResetFlow && (
-          <div className="flex items-center gap-2">
+          <div ref={menuRef} className="relative flex items-center gap-2">
             <ThemeToggle />
             <button
               type="button"
               className="inline-flex items-center justify-center rounded-lg p-2 text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
               aria-label={menuOpen ? "Close menu" : "Open menu"}
               aria-expanded={menuOpen}
+              aria-haspopup="menu"
               onClick={() => setMenuOpen((open) => !open)}
             >
               {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
+
+            {menuOpen && (
+              <nav
+                role="menu"
+                className="absolute right-0 top-full z-50 mt-1 w-56 max-h-[min(70vh,24rem)] overflow-y-auto rounded-lg border border-zinc-200 bg-white py-1 shadow-lg motion-safe:animate-fade-in motion-reduce:animate-none origin-top dark:border-zinc-700 dark:bg-zinc-900"
+              >
+                <div className="flex flex-col gap-0.5 px-1">
+                  <NavLinks
+                    user={user}
+                    isMediator={isMediator}
+                    displayName={displayName}
+                    onNavigate={() => setMenuOpen(false)}
+                    onSignOut={handleSignOut}
+                  />
+                </div>
+              </nav>
+            )}
           </div>
         )}
       </div>
-
-      {menuOpen && !isPasswordResetFlow && (
-        <>
-          <button
-            type="button"
-            className="fixed inset-0 top-14 z-40 bg-black/20 dark:bg-black/40"
-            aria-label="Close menu"
-            onClick={() => setMenuOpen(false)}
-          />
-          <nav className="fixed left-0 right-0 top-14 z-50 max-h-[calc(100vh-3.5rem)] overflow-y-auto border-b border-zinc-200 bg-white shadow-md motion-safe:animate-fade-in motion-reduce:animate-none origin-top dark:border-zinc-800 dark:bg-zinc-950">
-            <div className="mx-auto max-w-5xl px-4 py-3">
-              <div className="flex flex-col gap-1 text-sm">
-                <NavLinks
-                  user={user}
-                  isMediator={isMediator}
-                  displayName={displayName}
-                  onNavigate={() => setMenuOpen(false)}
-                  onSignOut={handleSignOut}
-                />
-              </div>
-            </div>
-          </nav>
-        </>
-      )}
     </header>
   );
 }

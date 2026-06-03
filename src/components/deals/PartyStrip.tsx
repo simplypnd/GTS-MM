@@ -1,13 +1,13 @@
 import Link from "next/link";
-import type { Profile } from "@/lib/types/database";
+import type { PublicProfileFields } from "@/lib/types/database";
 import { profilePath } from "@/lib/utils";
 
 export function PartyStrip({
   buyer,
   seller,
 }: {
-  buyer?: Profile | null;
-  seller?: Profile | null;
+  buyer?: PublicProfileFields | null;
+  seller?: PublicProfileFields | null;
 }) {
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm dark:border-zinc-800 dark:bg-zinc-900/50 sm:flex-row sm:flex-wrap">

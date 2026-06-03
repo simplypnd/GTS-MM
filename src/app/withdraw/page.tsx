@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { RecentWithdrawals } from "@/components/wallet/RecentWithdrawals";
 import {
   getWithdrawalDebit,
   getWithdrawalFee,
@@ -16,24 +16,10 @@ import {
   validateWithdrawalAmount,
   type WithdrawalProvider,
 } from "@/lib/wallet/withdrawal";
-import {
-  withdrawalStatusBadgeVariant,
-  withdrawalStatusLabel,
-} from "@/lib/wallet/withdrawalStatus";
-import { sectionEnter } from "@/lib/motion";
 import { LoadingSpinner } from "@/components/ui/spinner";
-import { LocalizedTime } from "@/components/ui/LocalizedTime";
 import { cn, formatPHP } from "@/lib/utils";
-import type { PartyRole } from "@/lib/types/database";
-
-type TransferRow = {
-  id: string;
-  amount_centavos: number;
-  fee_centavos: number;
-  provider: string | null;
-  status: string;
-  created_at: string;
-};
+import { sectionEnter } from "@/lib/motion";
+import type { PartyRole, WithdrawalTransfer } from "@/lib/types/database";
 
 const radioCardClass =
   "flex cursor-pointer items-start gap-3 rounded-lg border border-zinc-200 p-3 has-[:checked]:border-zinc-900 has-[:checked]:bg-zinc-50 dark:border-zinc-700 dark:has-[:checked]:border-zinc-300 dark:has-[:checked]:bg-zinc-800";
@@ -48,7 +34,7 @@ export default function WithdrawPage() {
   const [partyRole, setPartyRole] = useState<PartyRole>("seller");
   const [hasSellerAccount, setHasSellerAccount] = useState(false);
   const [hasBuyerAccount, setHasBuyerAccount] = useState(false);
-  const [recent, setRecent] = useState<TransferRow[]>([]);
+  const [recent, setRecent] = useState<WithdrawalTransfer[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -86,13 +72,15 @@ export default function WithdrawPage() {
 
     const { data: transfers } = await supabase
       .from("paymongo_transfers")
-      .select("id, amount_centavos, fee_centavos, provider, status, created_at")
+      .select(
+        "id, amount_centavos, fee_centavos, provider, status, reference_number, recipient_role, destination_snapshot, created_at, updated_at, transfer_id"
+      )
       .eq("recipient_user_id", user.id)
       .eq("type", "withdrawal")
       .order("created_at", { ascending: false })
       .limit(10);
 
-    setRecent((transfers as TransferRow[]) ?? []);
+    setRecent((transfers as WithdrawalTransfer[]) ?? []);
   }, []);
 
   useEffect(() => {
@@ -310,30 +298,7 @@ export default function WithdrawPage() {
             <CardTitle className="text-base">Recent withdrawals</CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-3 text-sm">
-              {recent.map((t) => (
-                <li
-                  key={t.id}
-                  className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 pb-2 last:border-0 dark:border-zinc-800"
-                >
-                  <span className="text-zinc-900 dark:text-zinc-100">
-                    {formatPHP(t.amount_centavos)}
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <Badge variant="default">
-                      {(t.provider ?? "—").toUpperCase()}
-                    </Badge>
-                    <Badge variant={withdrawalStatusBadgeVariant(t.status)}>
-                      {withdrawalStatusLabel(t.status)}
-                    </Badge>
-                  </span>
-                  <LocalizedTime
-                    dateTime={t.created_at}
-                    className="w-full text-xs text-zinc-500 dark:text-zinc-400"
-                  />
-                </li>
-              ))}
-            </ul>
+            <RecentWithdrawals withdrawals={recent} />
           </CardContent>
         </Card>
       )}

@@ -46,13 +46,6 @@ export default async function PublicProfilePage({ params }: Props) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: profileRow } = await service
-    .from("profiles")
-    .select("id")
-    .ilike("display_name", decoded)
-    .limit(1)
-    .maybeSingle();
-
   let reviewsList: {
     rating: number;
     comment: string | null;
@@ -60,11 +53,11 @@ export default async function PublicProfilePage({ params }: Props) {
     deal_title: string;
   }[] = [];
 
-  if (profileRow?.id) {
+  if (profile.id) {
     const { data: reviews } = await service
       .from("deal_reviews")
       .select("rating, comment, created_at, deal_id")
-      .eq("reviewee_id", profileRow.id)
+      .eq("reviewee_id", profile.id)
       .order("created_at", { ascending: false })
       .limit(5);
 

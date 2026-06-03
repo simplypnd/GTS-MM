@@ -15,7 +15,7 @@ import { formatPHP } from "@/lib/utils";
 import type {
   Deal,
   DealReview,
-  Profile,
+  PublicProfileFields,
   ParticipantRole,
 } from "@/lib/types/database";
 
@@ -52,17 +52,13 @@ export default async function DealDetailPage({
     }
   }
 
-  const { data: buyer } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", deal.buyer_id)
-    .single();
-
-  const { data: seller } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", deal.seller_id)
-    .single();
+  const { data: parties } = await supabase.rpc("get_profiles_public", {
+    p_user_ids: [deal.buyer_id, deal.seller_id],
+  });
+  const buyer =
+    parties?.find((p: PublicProfileFields) => p.id === deal.buyer_id) ?? null;
+  const seller =
+    parties?.find((p: PublicProfileFields) => p.id === deal.seller_id) ?? null;
 
   const { data: participant } = await supabase
     .from("deal_participants")
@@ -90,14 +86,10 @@ export default async function DealDetailPage({
   let paymentQr: { qr_image_url: string | null; expires_at: string | null } | null =
     null;
   if (deal.status === "awaiting_payment" && deal.buyer_id === user.id) {
-    const { data: payment } = await supabase
-      .from("paymongo_payments")
-      .select("qr_image_url, expires_at")
-      .eq("deal_id", id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    paymentQr = payment;
+    const { data: paymentRows } = await supabase.rpc("get_deal_payment_qr", {
+      p_deal_id: id,
+    });
+    paymentQr = paymentRows?.[0] ?? null;
   }
 
   let canCancelForNonDelivery = false;
@@ -141,7 +133,7 @@ export default async function DealDetailPage({
         <DealFeeSummary deal={typedDeal} />
       </div>
 
-      <PartyStrip buyer={buyer as Profile} seller={seller as Profile} />
+      <PartyStrip buyer={buyer} seller={seller} />
 
       {deal.status === "completed" && (
         <DealReviewSection
