@@ -13,6 +13,7 @@ export type ParticipantRole = "buyer" | "seller" | "mediator";
 export type PartyRole = "buyer" | "seller";
 export type TransferType = "release" | "refund";
 
+/** display_name is the unique public username (case-insensitive). */
 export interface Profile {
   id: string;
   display_name: string;

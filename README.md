@@ -13,16 +13,29 @@ Pseudo-escrow webapp: buyers pay via **PayMongo QR Ph**, funds stay on your plat
 ### 1. Supabase
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. Run the SQL in [`supabase/migrations/001_initial.sql`](supabase/migrations/001_initial.sql) in the SQL editor.
+2. Run the SQL in [`supabase/migrations/001_initial.sql`](supabase/migrations/001_initial.sql) in the SQL editor (once per project; skip if types/tables already exist).
 3. Run [`supabase/migrations/002_signup_no_public_role.sql`](supabase/migrations/002_signup_no_public_role.sql) (locks signup roles; admin-only mediators).
-4. Enable **Realtime** for the `messages` table (migration adds it to publication).
-5. Copy URL, anon key, and service role key.
-6. Under **Authentication → URL Configuration**, set:
+4. Run [`supabase/migrations/003_registration_username_unique.sql`](supabase/migrations/003_registration_username_unique.sql) (unique username on `profiles.display_name`, signup trigger hardening).
+
+   Before `003`, resolve duplicate display names if any:
+
+   ```sql
+   SELECT lower(trim(display_name)), count(*) FROM profiles
+   GROUP BY 1 HAVING count(*) > 1;
+   ```
+
+5. Enable **Realtime** for the `messages` table (migration adds it to publication).
+6. Copy URL, anon key, and service role key.
+7. Under **Authentication → URL Configuration**, set:
    - **Site URL:** `https://app.gtseller.shop` (or your production domain)
    - **Redirect URLs:** `https://app.gtseller.shop/auth/callback`
    - For local dev, also add: `http://localhost:3000/auth/callback`
 
    If Site URL is still `http://localhost:3000`, confirmation emails will redirect to localhost even in production.
+
+   Password reset emails use the same `/auth/callback` with `?next=/reset-password` (handled automatically when users use **Forgot password?** on the login page).
+
+   Built-in Supabase email has low rate limits; wait between test signups/resets, use custom SMTP, or disable **Confirm email** in dev to avoid `email rate limit exceeded`.
 
 ### 2. PayMongo
 
@@ -46,6 +59,13 @@ npm run dev
 Open [http://localhost:3000](http://localhost:3000).
 
 ## Test flow
+
+### Auth (registration and password reset)
+
+1. **Register** — pick a unique username (3–30 chars, letters/numbers/underscore); UI checks username and email availability before submit.
+2. **Forgot password** — `/forgot-password` from login; open email link → set password on `/reset-password` → log in.
+
+### Escrow
 
 1. Register two users (no role selection at signup).
 2. Each user adds payout accounts under **Settings → Payouts** as needed.
