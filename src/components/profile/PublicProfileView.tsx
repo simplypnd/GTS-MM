@@ -16,6 +16,17 @@ export function PublicProfileView({
     <div className="space-y-8">
       <header>
         <h1 className="text-2xl font-bold">{profile.display_name}</h1>
+        {viewerId && (
+          <p className="mt-1 text-xs text-zinc-500">
+            Profile URL:{" "}
+            <Link
+              href={profilePath(profile.display_name)}
+              className="underline hover:text-zinc-800 dark:hover:text-zinc-200"
+            >
+              {profilePath(profile.display_name)}
+            </Link>
+          </p>
+        )}
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
           Member since{" "}
           <LocalizedTime
@@ -70,18 +81,6 @@ export function PublicProfileView({
           </ul>
         )}
       </section>
-
-      {viewerId && (
-        <p className="text-xs text-zinc-500">
-          Profile URL:{" "}
-          <Link
-            href={profilePath(profile.display_name)}
-            className="underline hover:text-zinc-800 dark:hover:text-zinc-200"
-          >
-            {profilePath(profile.display_name)}
-          </Link>
-        </p>
-      )}
     </div>
   );
 }
