@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { markDealFunded } from "@/lib/escrow/markFunded";
+import { applyTransferUpdate } from "@/lib/paymongo/applyTransferUpdate";
+import { extractTransferUpdate } from "@/lib/paymongo/transferWebhook";
 import {
   extractPaymentIntentId,
   getWebhookEventType,
@@ -90,51 +92,34 @@ export async function POST(request: Request) {
     }
   }
 
-  const eventData = event.data as
-    | {
-        id?: string;
-        attributes?: {
-          status?: string;
-          metadata?: { transfer_row_id?: string };
-        };
-      }
-    | undefined;
-  const transferStatus = eventData?.attributes?.status;
-  const transferId = eventData?.id;
-  const metadata = eventData?.attributes?.metadata;
-  if (transferId && transferStatus) {
+  const transferUpdate = extractTransferUpdate(event);
+  if (transferUpdate) {
     const { postSystemMessage } = await import("@/lib/escrow/events");
-    const rowId = metadata?.transfer_row_id;
-    const statusMap: Record<string, string> = {
-      succeeded: "succeeded",
-      failed: "failed",
-      pending: "pending",
-    };
-    const mapped = statusMap[transferStatus] ?? "pending";
+    const { rowId, mapped } = await applyTransferUpdate(
+      service,
+      transferUpdate
+    );
 
-    await service
-      .from("paymongo_transfers")
-      .update({ status: mapped, transfer_id: transferId })
-      .eq("id", rowId);
+    if (rowId) {
+      const { data: row } = await service
+        .from("paymongo_transfers")
+        .select("deal_id, type")
+        .eq("id", rowId)
+        .single();
 
-    const { data: row } = await service
-      .from("paymongo_transfers")
-      .select("deal_id, type, status")
-      .eq("id", rowId)
-      .single();
-
-    if (rowId && row?.deal_id && mapped === "succeeded") {
-      await postSystemMessage(
-        service,
-        row.deal_id,
-        `${row.type} transfer completed successfully.`
-      );
-    } else if (rowId && row?.deal_id && mapped === "failed") {
-      await postSystemMessage(
-        service,
-        row.deal_id,
-        `${row.type} transfer failed. Please contact support.`
-      );
+      if (row?.deal_id && mapped === "succeeded") {
+        await postSystemMessage(
+          service,
+          row.deal_id,
+          `${row.type} transfer completed successfully.`
+        );
+      } else if (row?.deal_id && mapped === "failed") {
+        await postSystemMessage(
+          service,
+          row.deal_id,
+          `${row.type} transfer failed. Please contact support.`
+        );
+      }
     }
   }
 

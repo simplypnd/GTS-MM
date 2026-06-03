@@ -241,10 +241,10 @@ export default function RegisterPage() {
               autoComplete="new-password"
             />
           </div>
-          <p className="text-sm text-zinc-600">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
             You&apos;ll choose buyer or seller when creating a deal.
           </p>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
           {checkEmailBanner && (
             <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
               Check your email to confirm your account. After confirming, you
@@ -259,9 +259,9 @@ export default function RegisterPage() {
             {loading ? "Creating…" : "Register"}
           </Button>
         </form>
-        <p className="mt-4 text-center text-sm text-zinc-600">
+        <p className="mt-4 text-center text-sm text-zinc-600 dark:text-zinc-400">
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-zinc-900">
+          <Link href="/login" className="font-medium text-zinc-900 dark:text-zinc-100">
             Log in
           </Link>
         </p>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,14 @@ import {
   validateWithdrawalAmount,
   type WithdrawalProvider,
 } from "@/lib/wallet/withdrawal";
+import {
+  withdrawalStatusBadgeVariant,
+  withdrawalStatusLabel,
+} from "@/lib/wallet/withdrawalStatus";
 import { sectionEnter } from "@/lib/motion";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { LocalizedTime } from "@/components/ui/LocalizedTime";
-import { formatPHP } from "@/lib/utils";
+import { cn, formatPHP } from "@/lib/utils";
 import type { PartyRole } from "@/lib/types/database";
 
 type TransferRow = {
@@ -30,6 +34,12 @@ type TransferRow = {
   status: string;
   created_at: string;
 };
+
+const radioCardClass =
+  "flex cursor-pointer items-start gap-3 rounded-lg border border-zinc-200 p-3 has-[:checked]:border-zinc-900 has-[:checked]:bg-zinc-50 dark:border-zinc-700 dark:has-[:checked]:border-zinc-300 dark:has-[:checked]:bg-zinc-800";
+
+const selectClass =
+  "mt-1 flex h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100";
 
 export default function WithdrawPage() {
   const [balanceCentavos, setBalanceCentavos] = useState(0);
@@ -42,44 +52,60 @@ export default function WithdrawPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadData = useCallback(async () => {
     const supabase = createClient();
-    void (async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("balance_centavos")
-        .eq("id", user.id)
-        .single();
-      setBalanceCentavos(profile?.balance_centavos ?? 0);
+    try {
+      await fetch("/api/wallet/withdraw/sync", { method: "POST" });
+    } catch {
+      /* sync is best-effort */
+    }
 
-      const { data: accounts } = await supabase
-        .from("payout_accounts")
-        .select("party_role")
-        .eq("user_id", user.id)
-        .eq("is_default", true);
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("balance_centavos")
+      .eq("id", user.id)
+      .single();
+    setBalanceCentavos(profile?.balance_centavos ?? 0);
 
-      const roles = new Set(accounts?.map((a) => a.party_role) ?? []);
-      setHasSellerAccount(roles.has("seller"));
-      setHasBuyerAccount(roles.has("buyer"));
-      if (roles.has("seller")) setPartyRole("seller");
-      else if (roles.has("buyer")) setPartyRole("buyer");
+    const { data: accounts } = await supabase
+      .from("payout_accounts")
+      .select("party_role")
+      .eq("user_id", user.id)
+      .eq("is_default", true);
 
-      const { data: transfers } = await supabase
-        .from("paymongo_transfers")
-        .select("id, amount_centavos, fee_centavos, provider, status, created_at")
-        .eq("recipient_user_id", user.id)
-        .eq("type", "withdrawal")
-        .order("created_at", { ascending: false })
-        .limit(10);
+    const roles = new Set(accounts?.map((a) => a.party_role) ?? []);
+    setHasSellerAccount(roles.has("seller"));
+    setHasBuyerAccount(roles.has("buyer"));
+    if (roles.has("seller")) setPartyRole("seller");
+    else if (roles.has("buyer")) setPartyRole("buyer");
 
-      setRecent((transfers as TransferRow[]) ?? []);
-    })();
+    const { data: transfers } = await supabase
+      .from("paymongo_transfers")
+      .select("id, amount_centavos, fee_centavos, provider, status, created_at")
+      .eq("recipient_user_id", user.id)
+      .eq("type", "withdrawal")
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    setRecent((transfers as TransferRow[]) ?? []);
   }, []);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    function onVisible() {
+      if (document.visibilityState === "visible") void loadData();
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [loadData]);
 
   const amountCentavos = Math.round(parseFloat(amountPesos || "0") * 100);
   const feeCentavos = getWithdrawalFee(provider);
@@ -111,8 +137,7 @@ export default function WithdrawPage() {
       if (!res.ok) throw new Error(data.error ?? "Withdrawal failed");
       setMessage("Withdrawal submitted successfully.");
       setAmountPesos("");
-      setBalanceCentavos((b) => b - (data.total_debit_centavos as number));
-      window.location.reload();
+      await loadData();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Withdrawal failed");
     } finally {
@@ -123,8 +148,10 @@ export default function WithdrawPage() {
   return (
     <div className="mx-auto max-w-lg space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Withdraw</h1>
-        <p className="mt-1 text-sm text-zinc-600">
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+          Withdraw
+        </h1>
+        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
           Transfer your balance to your bank account.
         </p>
       </div>
@@ -156,7 +183,7 @@ export default function WithdrawPage() {
                 placeholder="50.00"
                 required
               />
-              <p className="mt-1 text-xs text-zinc-500">
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                 Minimum ₱50.00 to receive. InstaPay deducts ₱60.00 total (₱50 +
                 ₱10 fee). PESONet deducts ₱50.00.
               </p>
@@ -165,7 +192,7 @@ export default function WithdrawPage() {
             <div>
               <Label>Transfer method</Label>
               <div className="mt-2 space-y-2">
-                <label className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 has-[:checked]:border-zinc-900 has-[:checked]:bg-zinc-50">
+                <label className={radioCardClass}>
                   <input
                     type="radio"
                     name="provider"
@@ -175,14 +202,16 @@ export default function WithdrawPage() {
                     className="mt-1"
                   />
                   <div>
-                    <span className="font-medium">InstaPay</span>
-                    <p className="text-sm text-zinc-600">
+                    <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                      InstaPay
+                    </span>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
                       ₱{(INSTAPAY_FEE_CENTAVOS / 100).toFixed(0)} fee · usually
                       reflects within minutes
                     </p>
                   </div>
                 </label>
-                <label className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 has-[:checked]:border-zinc-900 has-[:checked]:bg-zinc-50">
+                <label className={radioCardClass}>
                   <input
                     type="radio"
                     name="provider"
@@ -192,8 +221,10 @@ export default function WithdrawPage() {
                     className="mt-1"
                   />
                   <div>
-                    <span className="font-medium">PESONet</span>
-                    <p className="text-sm text-zinc-600">
+                    <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                      PESONet
+                    </span>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
                       No fee · may take up to 1 business day
                     </p>
                   </div>
@@ -205,7 +236,7 @@ export default function WithdrawPage() {
               <div>
                 <Label>Payout account</Label>
                 <select
-                  className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                  className={selectClass}
                   value={partyRole}
                   onChange={(e) => setPartyRole(e.target.value as PartyRole)}
                 >
@@ -216,20 +247,25 @@ export default function WithdrawPage() {
             )}
 
             {amountCentavos > 0 && (
-              <p className="text-sm text-zinc-600">
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
                 You receive {formatPHP(amountCentavos)} · Total deducted:{" "}
                 {formatPHP(totalDebit)}
                 {feeCentavos > 0 && ` (includes ${formatPHP(feeCentavos)} fee)`}
               </p>
             )}
             {amountCentavos > 0 && !amountValidation.ok && (
-              <p className="text-sm text-red-600">{amountValidation.error}</p>
+              <p className="text-sm text-red-600 dark:text-red-400">
+                {amountValidation.error}
+              </p>
             )}
 
             {!hasSellerAccount && !hasBuyerAccount && (
-              <p className="text-sm text-amber-800">
+              <p className="text-sm text-amber-800 dark:text-amber-200">
                 Add a payout account in{" "}
-                <Link href="/settings/payouts" className="underline">
+                <Link
+                  href="/settings/payouts"
+                  className="underline hover:text-amber-900 dark:hover:text-amber-100"
+                >
                   Settings → Payouts
                 </Link>{" "}
                 before withdrawing.
@@ -254,7 +290,12 @@ export default function WithdrawPage() {
 
             {message && (
               <p
-                className={`text-sm ${message.includes("success") ? "text-emerald-700" : "text-red-600"}`}
+                className={cn(
+                  "text-sm",
+                  message.includes("success")
+                    ? "text-emerald-700 dark:text-emerald-400"
+                    : "text-red-600 dark:text-red-400"
+                )}
               >
                 {message}
               </p>
@@ -273,24 +314,22 @@ export default function WithdrawPage() {
               {recent.map((t) => (
                 <li
                   key={t.id}
-                  className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 pb-2 last:border-0"
+                  className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 pb-2 last:border-0 dark:border-zinc-800"
                 >
-                  <span>{formatPHP(t.amount_centavos)}</span>
+                  <span className="text-zinc-900 dark:text-zinc-100">
+                    {formatPHP(t.amount_centavos)}
+                  </span>
                   <span className="flex items-center gap-2">
                     <Badge variant="default">
                       {(t.provider ?? "—").toUpperCase()}
                     </Badge>
-                    <Badge
-                      variant={
-                        t.status === "succeeded" ? "success" : "default"
-                      }
-                    >
-                      {t.status}
+                    <Badge variant={withdrawalStatusBadgeVariant(t.status)}>
+                      {withdrawalStatusLabel(t.status)}
                     </Badge>
                   </span>
                   <LocalizedTime
                     dateTime={t.created_at}
-                    className="w-full text-xs text-zinc-500"
+                    className="w-full text-xs text-zinc-500 dark:text-zinc-400"
                   />
                 </li>
               ))}

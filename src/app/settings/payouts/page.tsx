@@ -90,7 +90,7 @@ function PayoutForm({ partyRole, label }: { partyRole: PartyRole; label: string 
       </CardHeader>
       <CardContent>
         {existing && (
-          <p className="mb-4 text-sm text-zinc-600">
+          <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
             Current: {existing.account_name}{" "}
             {maskAccountNumber(existing.account_number)}
           </p>
@@ -115,10 +115,12 @@ function PayoutForm({ partyRole, label }: { partyRole: PartyRole; label: string 
           <div>
             <Label>Bank</Label>
             {institutionsLoading ? (
-              <p className="mt-2 text-sm text-zinc-500">Loading banks…</p>
+              <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+                Loading banks…
+              </p>
             ) : institutions.length > 0 ? (
               <select
-                className="mt-1 flex h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 transition-colors focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                className="mt-1 flex h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 transition-colors focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:focus:border-zinc-400 dark:focus:ring-zinc-500"
                 value={bankBic}
                 onChange={(e) => {
                   setBankBic(e.target.value);
@@ -139,7 +141,9 @@ function PayoutForm({ partyRole, label }: { partyRole: PartyRole; label: string 
             ) : (
               <>
                 {institutionsError && (
-                  <p className="mt-1 text-sm text-amber-800">{institutionsError}</p>
+                  <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">
+                    {institutionsError}
+                  </p>
                 )}
                 <Input
                   className="mt-2"
@@ -159,7 +163,7 @@ function PayoutForm({ partyRole, label }: { partyRole: PartyRole; label: string 
           </div>
           {message && (
             <p
-              className={`text-sm ${message.includes("Failed") ? "text-red-600" : "text-emerald-600"}`}
+              className={`text-sm ${message.includes("Failed") ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}`}
             >
               {message}
             </p>
@@ -176,8 +180,10 @@ function PayoutForm({ partyRole, label }: { partyRole: PartyRole; label: string 
 export default function PayoutsSettingsPage() {
   return (
     <div className="mx-auto max-w-lg space-y-6">
-      <h1 className="text-2xl font-bold">Payout accounts</h1>
-      <p className="text-sm text-zinc-600">
+      <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+        Payout accounts
+      </h1>
+      <p className="text-sm text-zinc-600 dark:text-zinc-400">
         Add the bank account where you want to receive withdrawals from your GTS
         MM balance.
       </p>

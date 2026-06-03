@@ -119,7 +119,7 @@ export default function ResetPasswordPage() {
     return (
       <Card className="mx-auto max-w-md">
         <CardContent className="pt-6">
-          <p className="text-sm text-zinc-600">Loading…</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">Loading…</p>
         </CardContent>
       </Card>
     );
@@ -133,17 +133,17 @@ export default function ResetPasswordPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <p className="text-sm text-zinc-600">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
             This link is invalid or has expired. Request a new reset email.
           </p>
           <Link
             href="/forgot-password"
-            className="inline-block font-medium text-zinc-900"
+            className="inline-block font-medium text-zinc-900 dark:text-zinc-100"
           >
             Forgot password
           </Link>
-          <p className="text-sm text-zinc-600">
-            <Link href="/login" className="font-medium text-zinc-900">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <Link href="/login" className="font-medium text-zinc-900 dark:text-zinc-100">
               Back to log in
             </Link>
           </p>
@@ -159,7 +159,7 @@ export default function ResetPasswordPage() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <p className="text-sm text-zinc-600">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Set a new password to finish resetting your account.
           </p>
           <div>

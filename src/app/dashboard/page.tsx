@@ -39,7 +39,9 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+          Dashboard
+        </h1>
           <p className="text-zinc-600 dark:text-zinc-400">
             Welcome, {profile?.display_name ?? user.email}
           </p>
@@ -52,9 +54,11 @@ export default async function DashboardPage() {
       <div className="flex flex-col gap-3 sm:flex-row">
         <Link
           href="/withdraw"
-          className="flex-1 rounded-lg border border-zinc-200 bg-white p-4 motion-safe:transition-shadow motion-safe:hover:shadow-md"
+          className="flex-1 rounded-lg border border-zinc-200 bg-white p-4 motion-safe:transition-shadow motion-safe:hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900"
         >
-          <p className="text-sm text-zinc-600">Available balance</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Available balance
+          </p>
           <p className="text-xl font-semibold">
             {formatPHP(profile?.balance_centavos ?? 0)}
           </p>
@@ -62,7 +66,7 @@ export default async function DashboardPage() {
         {profile?.is_mediator && (
           <Link
             href="/disputes"
-            className="flex-1 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+            className="flex-1 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100"
           >
             <p className="font-medium">Open disputes</p>
             <p className="mt-1">Review and resolve →</p>
@@ -71,9 +75,13 @@ export default async function DashboardPage() {
       </div>
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold">Your deals</h2>
+        <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          Your deals
+        </h2>
         {dealsWithRole.length === 0 ? (
-          <p className="text-zinc-500">No deals yet. Create one to get started.</p>
+          <p className="text-zinc-500 dark:text-zinc-400">
+            No deals yet. Create one to get started.
+          </p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {dealsWithRole.map((deal, i) => (

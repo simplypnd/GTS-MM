@@ -46,9 +46,11 @@ export default async function DisputesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Open disputes</h1>
+      <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+        Open disputes
+      </h1>
       {!list?.length ? (
-        <p className="text-zinc-500">No open disputes.</p>
+        <p className="text-zinc-500 dark:text-zinc-400">No open disputes.</p>
       ) : (
         <div className="space-y-4">
           {list.map((d: Record<string, unknown>) => {
@@ -72,7 +74,9 @@ export default async function DisputesPage() {
                         {(d.opened_by_role as string) ?? "—"}
                       </Badge>
                     </p>
-                    <p className="text-zinc-600">{d.reason as string}</p>
+                    <p className="text-zinc-600 dark:text-zinc-400">
+                      {d.reason as string}
+                    </p>
                   </CardContent>
                 </Card>
               </Link>

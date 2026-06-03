@@ -92,8 +92,8 @@ export function ForgotPasswordForm() {
             {loading ? "Sending…" : "Send reset link"}
           </Button>
         </form>
-        <p className="mt-4 text-center text-sm text-zinc-600">
-          <Link href="/login" className="font-medium text-zinc-900">
+        <p className="mt-4 text-center text-sm text-zinc-600 dark:text-zinc-400">
+          <Link href="/login" className="font-medium text-zinc-900 dark:text-zinc-100">
             Back to log in
           </Link>
         </p>

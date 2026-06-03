@@ -155,9 +155,9 @@ export async function createBatchTransfer(params: {
 }
 
 export async function getTransfer(transferId: string) {
-  return paymongoFetch<{ data: { status: string } }>(
-    `/v2/transfers/${transferId}`
-  );
+  return paymongoFetch<{
+    data: { status?: string; attributes?: { status?: string } };
+  }>(`/v2/transfers/${transferId}`);
 }
 
 export type ReceivingInstitution = {

@@ -156,7 +156,7 @@ export function Navbar() {
         )}
 
         {!isPasswordResetFlow && (
-          <>
+          <div className="flex items-center gap-2 md:gap-4">
             <nav className="hidden items-center gap-4 text-sm md:flex">
               <NavLinks
                 user={user}
@@ -164,9 +164,7 @@ export function Navbar() {
                 onSignOut={handleSignOut}
               />
             </nav>
-
-            <div className="flex items-center gap-1">
-              <ThemeToggle />
+            <ThemeToggle />
             <button
               type="button"
               className="inline-flex items-center justify-center rounded-lg p-2 text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 md:hidden"
@@ -176,18 +174,13 @@ export function Navbar() {
             >
               {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
-            </div>
-          </>
+          </div>
         )}
       </div>
 
       {menuOpen && !isPasswordResetFlow && (
         <nav className="border-t border-zinc-200 px-4 py-3 md:hidden motion-safe:animate-fade-in motion-reduce:animate-none origin-top dark:border-zinc-800">
           <div className="flex flex-col gap-1 text-sm">
-            <div className="flex items-center gap-2 px-3 py-2 md:hidden">
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">Theme</span>
-              <ThemeToggle />
-            </div>
             <NavLinks
               user={user}
               isMediator={isMediator}

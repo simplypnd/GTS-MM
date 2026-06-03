@@ -56,7 +56,7 @@ export default function LoginPage() {
               <Label htmlFor="password">Password</Label>
               <Link
                 href="/forgot-password"
-                className="text-sm font-medium text-zinc-900"
+                className="text-sm font-medium text-zinc-900 dark:text-zinc-100"
               >
                 Forgot password?
               </Link>
@@ -69,14 +69,14 @@ export default function LoginPage() {
               required
             />
           </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Signing in…" : "Sign in"}
           </Button>
         </form>
-        <p className="mt-4 text-center text-sm text-zinc-600">
+        <p className="mt-4 text-center text-sm text-zinc-600 dark:text-zinc-400">
           No account?{" "}
-          <Link href="/register" className="font-medium text-zinc-900">
+          <Link href="/register" className="font-medium text-zinc-900 dark:text-zinc-100">
             Register
           </Link>
         </p>

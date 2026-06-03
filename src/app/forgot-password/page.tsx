@@ -5,7 +5,9 @@ export default function ForgotPasswordPage() {
   return (
     <Suspense
       fallback={
-        <p className="text-center text-sm text-zinc-600">Loading…</p>
+        <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
+          Loading…
+        </p>
       }
     >
       <ForgotPasswordForm />
