@@ -25,8 +25,11 @@ export async function POST(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  if (deal.buyer_id !== user.id && deal.seller_id !== user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (deal.buyer_id !== user.id) {
+    return NextResponse.json(
+      { error: "Only the buyer can start payment" },
+      { status: 403 }
+    );
   }
 
   try {

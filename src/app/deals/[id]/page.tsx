@@ -85,6 +85,19 @@ export default async function DealDetailPage({
   const participantRole = (participant?.role ?? null) as ParticipantRole | null;
   const typedDeal = deal as Deal;
 
+  let paymentQr: { qr_image_url: string | null; expires_at: string | null } | null =
+    null;
+  if (deal.status === "awaiting_payment" && deal.buyer_id === user.id) {
+    const { data: payment } = await supabase
+      .from("paymongo_payments")
+      .select("qr_image_url, expires_at")
+      .eq("deal_id", id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    paymentQr = payment;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -133,8 +146,13 @@ export default async function DealDetailPage({
       />
 
       {deal.status === "awaiting_payment" &&
-        deal.buyer_id === user.id && (
-          <QrPaymentClient dealId={id} />
+        deal.buyer_id === user.id &&
+        paymentQr?.qr_image_url && (
+          <QrPaymentClient
+            dealId={id}
+            initialQrUrl={paymentQr.qr_image_url}
+            initialExpiresAt={paymentQr.expires_at}
+          />
         )}
 
       {participantRole && (

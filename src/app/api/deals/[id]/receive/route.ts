@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { assertTransition } from "@/lib/escrow/dealState";
-import { logDealEvent, postSystemMessage } from "@/lib/escrow/events";
+import { releaseToSeller } from "@/lib/escrow/transfers";
+import type { Deal } from "@/lib/types/database";
 
 export async function POST(
   _request: Request,
@@ -26,25 +26,28 @@ export async function POST(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  try {
-    assertTransition(deal.status, "in_progress");
-  } catch (e) {
+  if (deal.status !== "in_progress") {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Invalid transition" },
+      { error: "Buyer must mark delivered before you can confirm receipt" },
       { status: 400 }
     );
   }
 
-  await supabase.from("deals").update({ status: "in_progress" }).eq("id", id);
-
   const service = await createServiceClient();
-  await logDealEvent(service, {
-    dealId: id,
-    actorId: user.id,
-    actorRole: "seller",
-    event: "shipped",
-  });
-  await postSystemMessage(service, id, "Seller marked the order as shipped.");
+
+  try {
+    await releaseToSeller(service, deal as Deal, user.id, "seller");
+  } catch (e) {
+    return NextResponse.json(
+      {
+        error:
+          e instanceof Error
+            ? e.message
+            : "Release failed — ensure seller payout account is set",
+      },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({ ok: true });
 }

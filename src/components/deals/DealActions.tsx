@@ -41,38 +41,98 @@ export function DealActions({
     }
   }
 
+  async function startPaymentWithQr() {
+    setLoading(true);
+    try {
+      const startRes = await fetch(`/api/deals/${deal.id}/start-payment`, {
+        method: "POST",
+      });
+      const startData = await startRes.json();
+      if (!startRes.ok) {
+        throw new Error(startData.error ?? "Failed to start payment");
+      }
+
+      const payRes = await fetch(`/api/deals/${deal.id}/pay`, { method: "POST" });
+      const payData = await payRes.json();
+      if (!payRes.ok) {
+        throw new Error(payData.error ?? "Failed to generate QR");
+      }
+
+      router.refresh();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Payment failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function retryPaymentWithQr() {
+    setLoading(true);
+    try {
+      const payRes = await fetch(`/api/deals/${deal.id}/pay`, { method: "POST" });
+      const payData = await payRes.json();
+      if (!payRes.ok) {
+        throw new Error(payData.error ?? "Failed to generate QR");
+      }
+      router.refresh();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Payment failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const status = deal.status as DealStatus;
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-      {status === "draft" && deal.created_by && (
+      {status === "draft" && participantRole === "buyer" && (
         <Button
           disabled={loading}
           className={actionBtn}
-          onClick={() => action("/start-payment")}
+          onClick={() => void startPaymentWithQr()}
         >
           Start payment
         </Button>
       )}
 
       {status === "awaiting_payment" && participantRole === "buyer" && (
-        <p className="text-sm text-zinc-600 w-full">
-          Use the QR section below to pay as the designated buyer.
+        <p className="w-full text-sm text-zinc-600">
+          Scan the QR code below to pay the deal amount.
         </p>
       )}
 
-      {status === "funded" && participantRole === "seller" && (
-        <Button disabled={loading} className={actionBtn} onClick={() => action("/ship")}>
-          Mark shipped
+      {status === "funded" && participantRole === "buyer" && (
+        <Button
+          disabled={loading}
+          className={actionBtn}
+          onClick={() => action("/deliver")}
+        >
+          Delivered
         </Button>
       )}
 
-      {(status === "funded" || status === "in_progress") &&
-        participantRole === "buyer" && (
-          <Button disabled={loading} className={actionBtn} onClick={() => action("/confirm")}>
-            Confirm receipt
-          </Button>
-        )}
+      {status === "funded" && participantRole === "seller" && (
+        <p className="w-full text-sm text-zinc-600">
+          Waiting for the buyer to mark the order as delivered.
+        </p>
+      )}
+
+      {status === "in_progress" && participantRole === "seller" && (
+        <Button
+          disabled={loading}
+          className={actionBtn}
+          onClick={() => action("/receive")}
+        >
+          Received
+        </Button>
+      )}
+
+      {status === "in_progress" && participantRole === "buyer" && (
+        <p className="w-full text-sm text-zinc-600">
+          Waiting for the seller to confirm receipt.
+        </p>
+      )}
 
       {(status === "funded" || status === "in_progress") &&
         (participantRole === "buyer" || participantRole === "seller") && (
@@ -138,7 +198,11 @@ export function DealActions({
       )}
 
       {status === "expired" && participantRole === "buyer" && (
-        <Button disabled={loading} className={actionBtn} onClick={() => action("/start-payment")}>
+        <Button
+          disabled={loading}
+          className={actionBtn}
+          onClick={() => void retryPaymentWithQr()}
+        >
           Retry payment
         </Button>
       )}
