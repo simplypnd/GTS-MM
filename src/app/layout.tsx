@@ -40,7 +40,7 @@ async function loadSessionProfile(
   const supabase = await createClient();
   const { data } = await supabase
     .from("profiles")
-    .select("display_name, is_mediator, theme_preference")
+    .select("display_name, is_mediator, is_admin, theme_preference")
     .eq("id", userId)
     .single();
 
@@ -50,6 +50,7 @@ async function loadSessionProfile(
   return {
     display_name: data.display_name ?? null,
     is_mediator: !!data.is_mediator,
+    is_admin: !!data.is_admin,
     theme_preference:
       theme === "light" || theme === "dark" ? theme : null,
   };
@@ -84,6 +85,7 @@ export default async function RootLayout({
             initialUserId={user?.id ?? null}
             initialDisplayName={sessionProfile?.display_name ?? null}
             initialIsMediator={sessionProfile?.is_mediator ?? false}
+            initialIsAdmin={sessionProfile?.is_admin ?? false}
           />
           <main className="mx-auto max-w-5xl px-4 py-6 sm:py-8">{children}</main>
           <SiteFooter

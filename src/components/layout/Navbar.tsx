@@ -17,6 +17,7 @@ const dropdownLinkClass =
 function NavLinks({
   user,
   isMediator,
+  isAdmin,
   displayName,
   onNavigate,
   onSignOut,
@@ -24,6 +25,7 @@ function NavLinks({
 }: {
   user: User | null;
   isMediator: boolean;
+  isAdmin: boolean;
   displayName: string | null;
   onNavigate?: () => void;
   onSignOut: () => Promise<void>;
@@ -61,6 +63,14 @@ function NavLinks({
           New deal
         </Link>
         <Link
+          href="/referrals"
+          className={linkClass}
+          onClick={onNavigate}
+          role="menuitem"
+        >
+          Referrals
+        </Link>
+        <Link
           href="/withdraw"
           className={linkClass}
           onClick={onNavigate}
@@ -92,6 +102,16 @@ function NavLinks({
             role="menuitem"
           >
             Disputes
+          </Link>
+        )}
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className={linkClass}
+            onClick={onNavigate}
+            role="menuitem"
+          >
+            Admin
           </Link>
         )}
         <Button
@@ -135,15 +155,18 @@ export function Navbar({
   initialUserId = null,
   initialDisplayName = null,
   initialIsMediator = false,
+  initialIsAdmin = false,
 }: {
   initialUserId?: string | null;
   initialDisplayName?: string | null;
   initialIsMediator?: boolean;
+  initialIsAdmin?: boolean;
 }) {
   const router = useRouter();
   const menuRef = useRef<HTMLDivElement>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isMediator, setIsMediator] = useState(initialIsMediator);
+  const [isAdmin, setIsAdmin] = useState(initialIsAdmin);
   const [displayName, setDisplayName] = useState<string | null>(
     initialDisplayName
   );
@@ -156,27 +179,34 @@ export function Navbar({
 
     function applyProfile(
       userId: string,
-      profile: { is_mediator: boolean; display_name: string | null }
+      profile: {
+        is_mediator: boolean;
+        is_admin: boolean;
+        display_name: string | null;
+      }
     ) {
       profileUserIdRef.current = userId;
       setIsMediator(!!profile.is_mediator);
+      setIsAdmin(!!profile.is_admin);
       setDisplayName(profile.display_name);
     }
 
     function clearProfile() {
       profileUserIdRef.current = null;
       setIsMediator(false);
+      setIsAdmin(false);
       setDisplayName(null);
     }
 
     async function fetchProfile(userId: string) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("is_mediator, display_name")
+        .select("is_mediator, is_admin, display_name")
         .eq("id", userId)
         .single();
       applyProfile(userId, {
         is_mediator: !!profile?.is_mediator,
+        is_admin: !!profile?.is_admin,
         display_name: profile?.display_name ?? null,
       });
     }
@@ -204,10 +234,11 @@ export function Navbar({
 
       if (
         userId === initialUserId &&
-        (initialDisplayName !== null || initialIsMediator)
+        (initialDisplayName !== null || initialIsMediator || initialIsAdmin)
       ) {
         applyProfile(userId, {
           is_mediator: initialIsMediator,
+          is_admin: initialIsAdmin,
           display_name: initialDisplayName,
         });
         return;
@@ -227,7 +258,7 @@ export function Navbar({
     });
 
     return () => subscription.unsubscribe();
-  }, [initialUserId, initialDisplayName, initialIsMediator]);
+  }, [initialUserId, initialDisplayName, initialIsMediator, initialIsAdmin]);
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -235,6 +266,7 @@ export function Navbar({
     setUser(null);
     profileUserIdRef.current = null;
     setIsMediator(false);
+    setIsAdmin(false);
     setDisplayName(null);
     router.push("/");
     router.refresh();
@@ -306,6 +338,7 @@ export function Navbar({
                   <NavLinks
                     user={user}
                     isMediator={isMediator}
+                    isAdmin={isAdmin}
                     displayName={displayName}
                     onNavigate={() => setMenuOpen(false)}
                     onSignOut={handleSignOut}

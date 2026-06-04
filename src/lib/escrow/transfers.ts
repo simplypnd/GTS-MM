@@ -4,6 +4,7 @@ import {
 } from "@/lib/escrow/dealState";
 import { dealFeeBreakdown } from "@/lib/escrow/fees";
 import { logDealEvent, postSystemMessage } from "@/lib/escrow/events";
+import { payReferralOnDealComplete } from "@/lib/referrals/rewards";
 import { creditUserBalance } from "@/lib/wallet/balance";
 import type { createServiceClient } from "@/lib/supabase/server";
 import type { Deal, PartyRole } from "@/lib/types/database";
@@ -60,6 +61,8 @@ export async function releaseToSeller(
     deal.id,
     `Funds credited to seller balance (₱${(net / 100).toFixed(2)} after ${deal.platform_fee_bps / 100}% fee on ₱${(gross / 100).toFixed(2)}). Withdraw at /withdraw.`
   );
+
+  await payReferralOnDealComplete(supabase, deal);
 }
 
 export async function refundToBuyer(

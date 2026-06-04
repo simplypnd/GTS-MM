@@ -22,6 +22,14 @@ Peer deals with **MidMan** fund protection: buyers pay via **PayMongo QR Ph** or
 8. Run [`supabase/migrations/010_client_data_privacy.sql`](supabase/migrations/010_client_data_privacy.sql) (profile/payment RPCs; restricts client SELECT).
 9. Run [`supabase/migrations/011_fix_deal_reviews_insert.sql`](supabase/migrations/011_fix_deal_reviews_insert.sql) (`insert_deal_review` RPC).
 10. Run [`supabase/migrations/012_public_profile_counterparty.sql`](supabase/migrations/012_public_profile_counterparty.sql) (public profile recent deals show counterparty username).
+11. Run [`supabase/migrations/013_referrals.sql`](supabase/migrations/013_referrals.sql) (referral codes, payouts, `is_admin`, signup attribution).
+12. Run [`supabase/migrations/014_admin_stats.sql`](supabase/migrations/014_admin_stats.sql) (`get_admin_platform_stats` RPC for admin dashboard).
+
+   Assign platform admin in SQL (your user id):
+
+   ```sql
+   UPDATE profiles SET is_admin = true WHERE id = 'YOUR-USER-UUID';
+   ```
 
    Before `003`, resolve duplicate display names if any:
 

@@ -149,7 +149,21 @@ export default function RefundReturnPolicyPage() {
         collusion.
       </p>
 
-      <h2>11. Contact and amendments</h2>
+      <h2 id="referral-program">11. Referral program</h2>
+      <p>
+        GTS MM may offer a referral program under which registered users share
+        a personal referral link. When a new user registers through that link and
+        later completes deals as the buyer, the referring user may receive a
+        reward of zero point five percent (0.5%) of the gross deal amount,
+        credited to wallet balance upon deal completion (release to seller).
+        Rewards are not paid on cancelled, refunded, or incomplete deals, nor
+        where the referrer is a party to the same deal. Referral attribution is
+        fixed at registration and cannot be changed afterward. Program details
+        are described on the <a href="/referrals">Referral program</a> page.
+        GTS MM may modify or discontinue the program at any time.
+      </p>
+
+      <h2>12. Contact and amendments</h2>
       <p>
         Questions regarding this Policy:{" "}
         <a href="/contact">Contact us</a>. GTS MM may update this Policy;

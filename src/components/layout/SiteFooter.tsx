@@ -37,6 +37,9 @@ export function SiteFooter({
                 <Link href="/withdraw" className={linkClass}>
                   Withdraw
                 </Link>
+                <Link href="/referrals" className={linkClass}>
+                  Referral program
+                </Link>
               </>
             ) : (
               <>

@@ -7,7 +7,8 @@ export type BalanceLedgerKind =
   | "deal_release"
   | "deal_refund"
   | "withdrawal"
-  | "withdrawal_reversal";
+  | "withdrawal_reversal"
+  | "referral_reward";
 
 export async function applyBalanceDelta(
   supabase: Supabase,

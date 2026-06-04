@@ -20,6 +20,7 @@ export type ThemePreference = "light" | "dark";
 export type SessionProfile = {
   display_name: string | null;
   is_mediator: boolean;
+  is_admin: boolean;
   theme_preference: ThemePreference | null;
 };
 
@@ -29,11 +30,43 @@ export interface Profile {
   display_name: string;
   role: ProfileRole;
   is_mediator: boolean;
+  is_admin: boolean;
+  referral_code: string;
+  referred_by_user_id: string | null;
   phone: string | null;
   balance_centavos: number;
   theme_preference: ThemePreference;
   created_at: string;
   updated_at: string;
+}
+
+export interface ReferralPayout {
+  id: string;
+  deal_id: string;
+  referrer_id: string;
+  referred_user_id: string;
+  amount_centavos: number;
+  created_at: string;
+}
+
+export type AdminStatsGranularity = "day" | "week" | "month";
+
+export interface AdminStatsBucket {
+  period_start: string;
+  completed_deals: number;
+  gross_fees_centavos: number;
+  referral_rewards_centavos: number;
+  net_revenue_centavos: number;
+}
+
+export interface AdminPlatformStats {
+  totals: {
+    completed_deals: number;
+    gross_fees_centavos: number;
+    referral_rewards_centavos: number;
+    net_revenue_centavos: number;
+  };
+  buckets: AdminStatsBucket[];
 }
 
 export interface Deal {
