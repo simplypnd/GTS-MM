@@ -1,4 +1,5 @@
 import { getTransfer } from "@/lib/paymongo/client";
+import { parsePaymongoTransferResource } from "@/lib/paymongo/transferFields";
 import type { TransferDbStatus } from "@/lib/paymongo/transferWebhook";
 import type { createServiceClient } from "@/lib/supabase/server";
 
@@ -17,7 +18,7 @@ export async function syncPendingWithdrawalsForUser(
 ): Promise<{ updated: number }> {
   const { data: pending } = await supabase
     .from("paymongo_transfers")
-    .select("id, transfer_id, status")
+    .select("id, transfer_id, status, provider_reference_number")
     .eq("recipient_user_id", userId)
     .eq("type", "withdrawal")
     .eq("status", "pending")
@@ -30,17 +31,32 @@ export async function syncPendingWithdrawalsForUser(
     if (!row.transfer_id) continue;
     try {
       const res = await getTransfer(row.transfer_id);
-      const remoteStatus =
-        res.data?.attributes?.status ?? res.data?.status;
+      const parsed = parsePaymongoTransferResource(res.data);
+      const remoteStatus = parsed.status;
       if (!remoteStatus) continue;
       const mapped = mapPaymongoStatus(remoteStatus);
-      if (mapped === "pending") continue;
+
+      const patch: {
+        status?: TransferDbStatus;
+        provider_reference_number?: string;
+      } = {};
+
+      if (mapped !== "pending") {
+        patch.status = mapped;
+      }
+      if (
+        parsed.providerReferenceNumber &&
+        parsed.providerReferenceNumber !== row.provider_reference_number
+      ) {
+        patch.provider_reference_number = parsed.providerReferenceNumber;
+      }
+
+      if (Object.keys(patch).length === 0) continue;
 
       const { error } = await supabase
         .from("paymongo_transfers")
-        .update({ status: mapped })
-        .eq("id", row.id)
-        .eq("status", "pending");
+        .update(patch)
+        .eq("id", row.id);
 
       if (!error) updated += 1;
     } catch (e) {

@@ -5,6 +5,7 @@ export type TransferUpdate = {
   status: TransferDbStatus;
   transferRowId?: string;
   referenceNumber?: string;
+  providerReferenceNumber?: string;
 };
 
 function mapPaymongoStatus(raw: string | undefined): TransferDbStatus | null {
@@ -25,10 +26,18 @@ function parseMetadata(
   return typeof rowId === "string" ? { transfer_row_id: rowId } : undefined;
 }
 
+function providerRefFromObject(obj: {
+  provider_reference_number?: string | null;
+}): string | undefined {
+  const v = obj.provider_reference_number;
+  return typeof v === "string" && v.trim() ? v.trim() : undefined;
+}
+
 function fromTransferObject(obj: {
   id?: string;
   status?: string;
   reference_number?: string;
+  provider_reference_number?: string | null;
   metadata?: unknown;
 }): TransferUpdate | null {
   if (!obj.id?.startsWith("tr_")) return null;
@@ -40,6 +49,7 @@ function fromTransferObject(obj: {
     status,
     transferRowId: meta?.transfer_row_id,
     referenceNumber: obj.reference_number,
+    providerReferenceNumber: providerRefFromObject(obj),
   };
 }
 
@@ -56,6 +66,7 @@ export function extractTransferUpdate(event: unknown): TransferUpdate | null {
         id?: string;
         status?: string;
         reference_number?: string;
+        provider_reference_number?: string | null;
         metadata?: unknown;
       }
     );
@@ -68,6 +79,7 @@ export function extractTransferUpdate(event: unknown): TransferUpdate | null {
       status?: string;
       metadata?: unknown;
       reference_number?: string;
+      provider_reference_number?: string | null;
     };
     return fromTransferObject({
       id: data.id,
@@ -88,6 +100,7 @@ export function extractTransferUpdate(event: unknown): TransferUpdate | null {
             status?: string;
             metadata?: unknown;
             reference_number?: string;
+            provider_reference_number?: string | null;
           };
         };
       }
@@ -109,6 +122,7 @@ export function extractTransferUpdate(event: unknown): TransferUpdate | null {
         status?: string;
         metadata?: { transfer_row_id?: string };
         reference_number?: string;
+        provider_reference_number?: string | null;
       }
     | undefined;
   if (data?.id && typeof data.id === "string" && flatAttrs?.status) {
@@ -119,6 +133,7 @@ export function extractTransferUpdate(event: unknown): TransferUpdate | null {
       status,
       transferRowId: flatAttrs.metadata?.transfer_row_id,
       referenceNumber: flatAttrs.reference_number,
+      providerReferenceNumber: providerRefFromObject(flatAttrs),
     };
   }
 

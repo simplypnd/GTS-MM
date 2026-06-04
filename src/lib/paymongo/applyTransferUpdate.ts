@@ -7,10 +7,17 @@ export async function applyTransferUpdate(
   supabase: Supabase,
   update: TransferUpdate
 ): Promise<{ rowId: string | null; mapped: string }> {
-  const payload = {
+  const payload: {
+    status: typeof update.status;
+    transfer_id: string;
+    provider_reference_number?: string;
+  } = {
     status: update.status,
     transfer_id: update.transferId,
   };
+  if (update.providerReferenceNumber) {
+    payload.provider_reference_number = update.providerReferenceNumber;
+  }
 
   if (update.transferRowId) {
     const { data } = await supabase

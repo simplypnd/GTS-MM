@@ -145,7 +145,7 @@ export interface WithdrawalTransfer {
   fee_centavos: number;
   provider: string | null;
   status: string;
-  reference_number: string;
+  provider_reference_number: string | null;
   recipient_role: PartyRole;
   destination_snapshot: {
     number?: string;
@@ -154,7 +154,6 @@ export interface WithdrawalTransfer {
   } | null;
   created_at: string;
   updated_at: string;
-  transfer_id: string | null;
 }
 
 export interface PublicProfile {

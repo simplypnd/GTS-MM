@@ -86,9 +86,15 @@ export function RecentWithdrawals({
               <div className="mt-2 rounded-md bg-zinc-50 p-3 text-xs dark:bg-zinc-800/50">
                 <dl className="space-y-2">
                   <DetailRow label="Reference">
-                    <span className="break-all font-mono select-all">
-                      {t.reference_number}
-                    </span>
+                    {t.provider_reference_number ? (
+                      <span className="break-all font-mono select-all">
+                        {t.provider_reference_number}
+                      </span>
+                    ) : (
+                      <span className="text-zinc-500 dark:text-zinc-400">
+                        Pending
+                      </span>
+                    )}
                   </DetailRow>
                   <DetailRow label="Received">
                     {formatPHP(t.amount_centavos)}
@@ -125,11 +131,6 @@ export function RecentWithdrawals({
                       {destination.number
                         ? ` · ${maskAccountNumber(destination.number)}`
                         : null}
-                    </DetailRow>
-                  )}
-                  {t.transfer_id && (
-                    <DetailRow label="Transfer ID">
-                      <span className="break-all font-mono">{t.transfer_id}</span>
                     </DetailRow>
                   )}
                 </dl>

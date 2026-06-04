@@ -86,6 +86,7 @@ export async function executePaymongoWithdrawal(
       .update({
         batch_transfer_id: result.data.id,
         transfer_id: transfer?.id,
+        provider_reference_number: transfer?.provider_reference_number ?? null,
         status: transfer?.status === "succeeded" ? "succeeded" : "pending",
       })
       .eq("id", row.id);

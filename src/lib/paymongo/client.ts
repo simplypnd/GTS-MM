@@ -109,6 +109,7 @@ export interface BatchTransferResponse {
       id: string;
       status: string;
       reference_number?: string;
+      provider_reference_number?: string | null;
     }>;
   };
 }
@@ -156,7 +157,17 @@ export async function createBatchTransfer(params: {
 
 export async function getTransfer(transferId: string) {
   return paymongoFetch<{
-    data: { status?: string; attributes?: { status?: string } };
+    data: {
+      id?: string;
+      status?: string;
+      reference_number?: string;
+      provider_reference_number?: string | null;
+      attributes?: {
+        status?: string;
+        reference_number?: string;
+        provider_reference_number?: string | null;
+      };
+    };
   }>(`/v2/transfers/${transferId}`);
 }
 
