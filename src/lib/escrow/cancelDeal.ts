@@ -70,17 +70,28 @@ export async function enforceUnpaidDealTimeout(
 
   const { data: events } = await service
     .from("deal_events")
-    .select("event, created_at")
+    .select("event, created_at, payload")
     .eq("deal_id", dealId)
     .order("created_at", { ascending: false });
 
-  if (getPaymentPaidAt(events ?? [])) {
+  const eventRows = events ?? [];
+
+  if (getPaymentPaidAt(eventRows)) {
     return { status: deal.status, cancelled: false };
   }
 
-  const windowStart = getPaymentWindowStartAt(events ?? [], deal.updated_at);
+  const windowStart = getPaymentWindowStartAt(eventRows, deal.updated_at);
   if (Date.now() - windowStart.getTime() < PAYMENT_SLA_MS) {
     return { status: deal.status, cancelled: false };
+  }
+
+  const hasTimeoutCancel = eventRows.some((e) => {
+    if (e.event !== "deal_cancelled") return false;
+    const payload = e.payload as { reason?: string } | null;
+    return payload?.reason === "payment_timeout";
+  });
+  if (hasTimeoutCancel) {
+    return { status: "cancelled", cancelled: false };
   }
 
   try {
@@ -89,13 +100,21 @@ export async function enforceUnpaidDealTimeout(
     return { status: deal.status, cancelled: false };
   }
 
-  const { error } = await service
+  const { data: updated, error } = await service
     .from("deals")
     .update({ status: "cancelled" })
-    .eq("id", dealId);
+    .eq("id", dealId)
+    .eq("status", "awaiting_payment")
+    .select("id")
+    .maybeSingle();
 
-  if (error) {
-    return { status: deal.status, cancelled: false };
+  if (error || !updated) {
+    const { data: current } = await service
+      .from("deals")
+      .select("status")
+      .eq("id", dealId)
+      .single();
+    return { status: current?.status ?? deal.status, cancelled: false };
   }
 
   await logDealEvent(service, {

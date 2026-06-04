@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { profilePath } from "@/lib/utils";
 
 const linkClass =
   "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100";
@@ -9,6 +10,16 @@ export async function SiteFooter() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  let displayName: string | null = null;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", user.id)
+      .single();
+    displayName = profile?.display_name ?? null;
+  }
 
   return (
     <footer className="border-t border-zinc-200 bg-zinc-50/80 pt-12 pb-8 dark:border-zinc-800 dark:bg-zinc-950/80">
@@ -67,15 +78,36 @@ export async function SiteFooter() {
         </div>
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-            Account
+            {user ? "Settings" : "Account"}
           </p>
           <nav className="mt-3 flex flex-col gap-2 text-sm">
-            <Link href="/login" className={linkClass}>
-              Log in
-            </Link>
-            <Link href="/register" className={linkClass}>
-              Register
-            </Link>
+            {user ? (
+              <>
+                <Link href="/settings/appearance" className={linkClass}>
+                  Appearance
+                </Link>
+                <Link href="/settings/payouts" className={linkClass}>
+                  Payout accounts
+                </Link>
+                {displayName ? (
+                  <Link
+                    href={profilePath(displayName)}
+                    className={linkClass}
+                  >
+                    Public profile
+                  </Link>
+                ) : null}
+              </>
+            ) : (
+              <>
+                <Link href="/login" className={linkClass}>
+                  Log in
+                </Link>
+                <Link href="/register" className={linkClass}>
+                  Register
+                </Link>
+              </>
+            )}
           </nav>
         </div>
       </div>

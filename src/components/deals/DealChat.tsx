@@ -44,7 +44,10 @@ export function DealChat({
           filter: `deal_id=eq.${dealId}`,
         },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message]);
+          const row = payload.new as Message;
+          setMessages((prev) =>
+            prev.some((m) => m.id === row.id) ? prev : [...prev, row]
+          );
         }
       )
       .subscribe();

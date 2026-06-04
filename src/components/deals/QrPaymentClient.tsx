@@ -1,29 +1,28 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { QrPayment } from "@/components/deals/QrPayment";
+import type { DealStatus } from "@/lib/types/database";
 
 export function QrPaymentClient({
   dealId,
   initialQrUrl,
   initialExpiresAt,
   embedded = false,
-  onFunded,
+  onPaymentStatus,
 }: {
   dealId: string;
   initialQrUrl?: string | null;
   initialExpiresAt?: string | null;
   embedded?: boolean;
-  onFunded?: () => void;
+  onPaymentStatus?: (status: DealStatus) => void;
 }) {
-  const router = useRouter();
   return (
     <QrPayment
       dealId={dealId}
       initialQrUrl={initialQrUrl}
       initialExpiresAt={initialExpiresAt}
       embedded={embedded}
-      onFunded={onFunded ?? (() => router.refresh())}
+      onPaymentStatus={onPaymentStatus}
     />
   );
 }

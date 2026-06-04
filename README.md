@@ -17,6 +17,11 @@ Peer deals with **MidMan** fund protection: buyers pay via **PayMongo QR Ph** or
 3. Run [`supabase/migrations/002_signup_no_public_role.sql`](supabase/migrations/002_signup_no_public_role.sql) (locks signup roles; admin-only mediators).
 4. Run [`supabase/migrations/003_registration_username_unique.sql`](supabase/migrations/003_registration_username_unique.sql) (unique username on `profiles.display_name`, signup trigger hardening).
 5. Run [`supabase/migrations/004_wallet_balance.sql`](supabase/migrations/004_wallet_balance.sql) (wallet balance, ledger, withdrawals).
+6. Run [`supabase/migrations/005_realtime_deal_status.sql`](supabase/migrations/005_realtime_deal_status.sql) (**required** for live deal status, events, disputes).
+7. Run migrations `006` through `009` if present in [`supabase/migrations/`](supabase/migrations/) (deal flow, reviews, public profile).
+8. Run [`supabase/migrations/010_client_data_privacy.sql`](supabase/migrations/010_client_data_privacy.sql) (profile/payment RPCs; restricts client SELECT).
+9. Run [`supabase/migrations/011_fix_deal_reviews_insert.sql`](supabase/migrations/011_fix_deal_reviews_insert.sql) (`insert_deal_review` RPC).
+10. Run [`supabase/migrations/012_public_profile_counterparty.sql`](supabase/migrations/012_public_profile_counterparty.sql) (public profile recent deals show counterparty username).
 
    Before `003`, resolve duplicate display names if any:
 
@@ -25,9 +30,9 @@ Peer deals with **MidMan** fund protection: buyers pay via **PayMongo QR Ph** or
    GROUP BY 1 HAVING count(*) > 1;
    ```
 
-6. Enable **Realtime** for the `messages` table (migration adds it to publication).
-7. Copy URL, anon key, and service role key.
-8. Under **Authentication → URL Configuration**, set:
+11. Confirm **Realtime** publication includes `messages`, `deals`, `deal_events`, and `disputes` (migrations `001` and `005`).
+12. Copy URL, anon key, and service role key.
+13. Under **Authentication → URL Configuration**, set:
    - **Site URL (production):** `https://app.gtseller.shop`
    - **Site URL (local dev only):** `http://localhost:3000` — switch back before shipping; if production Site URL is localhost, emails will point at localhost.
    - **Redirect URLs (add every URL you use):**

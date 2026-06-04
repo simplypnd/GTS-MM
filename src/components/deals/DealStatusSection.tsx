@@ -12,7 +12,11 @@ import {
   statusBadgeVariant,
 } from "@/lib/deals/statusGuidance";
 import { formatDealEventLabel } from "@/lib/deals/eventLabels";
-import { isQrActive } from "@/lib/deals/paymentQr";
+import { isQrActive, type PaymentQrFields } from "@/lib/deals/paymentQr";
+import {
+  canBuyerCancelForNonDelivery,
+  getPaymentPaidAt,
+} from "@/lib/escrow/cancelDeal";
 import { createClient } from "@/lib/supabase/client";
 import { sectionEnter } from "@/lib/motion";
 import { cn } from "@/lib/utils";
@@ -30,10 +34,7 @@ type DealEventRow = {
   actor_role: string | null;
 };
 
-type PaymentQr = {
-  qr_image_url: string | null;
-  expires_at: string | null;
-};
+type PaymentQr = PaymentQrFields;
 
 function prependEvent(prev: DealEventRow[], row: DealEventRow): DealEventRow[] {
   if (prev.some((e) => e.id === row.id)) return prev;
@@ -68,7 +69,12 @@ export function DealStatusSection({
   const [eventsLoaded, setEventsLoaded] = useState(false);
 
   useEffect(() => {
-    setDeal(initialDeal);
+    setDeal((prev) =>
+      new Date(initialDeal.updated_at).getTime() >=
+      new Date(prev.updated_at).getTime()
+        ? initialDeal
+        : prev
+    );
     setDispute(initialDispute);
     setPaymentQr(initialPaymentQr);
   }, [initialDeal, initialDispute, initialPaymentQr]);
@@ -162,6 +168,7 @@ export function DealStatusSection({
         setPaymentQr({
           qr_image_url: row.qr_image_url,
           expires_at: row.expires_at,
+          status: row.status ?? null,
         });
       }
     }
@@ -175,21 +182,9 @@ export function DealStatusSection({
     supabase,
   ]);
 
-  async function refreshDealStatus() {
-    const res = await fetch(`/api/deals/${dealId}/status`);
-    const data = await res.json();
-    if (data.status) {
-      setDeal((prev) => ({ ...prev, status: data.status as DealStatus }));
-    }
+  function applyDealStatus(status: DealStatus) {
+    setDeal((prev) => ({ ...prev, status }));
   }
-
-  useEffect(() => {
-    if (deal.status !== "awaiting_payment") return;
-    const interval = setInterval(() => {
-      void refreshDealStatus();
-    }, 60_000);
-    return () => clearInterval(interval);
-  }, [deal.status, dealId]);
 
   const status = deal.status as DealStatus;
   const canPayWithBalance =
@@ -205,6 +200,17 @@ export function DealStatusSection({
     isQrActive(paymentQr);
 
   const showQr = hasActiveQr;
+
+  const isBuyerOnDeal = deal.buyer_id === currentUserId;
+  const paymentPaidAt = getPaymentPaidAt(events);
+  const useDerivedCancel =
+    status === "funded" && isBuyerOnDeal && (paymentPaidAt !== null || eventsLoaded);
+  const cancelEligibility = useDerivedCancel
+    ? canBuyerCancelForNonDelivery(paymentPaidAt)
+    : {
+        allowed: canCancelForNonDelivery,
+        waitMinutes: cancelWaitMinutes,
+      };
 
   return (
     <section>
@@ -245,7 +251,7 @@ export function DealStatusSection({
                 initialQrUrl={paymentQr.qr_image_url}
                 initialExpiresAt={paymentQr.expires_at}
                 embedded
-                onFunded={refreshDealStatus}
+                onPaymentStatus={applyDealStatus}
               />
             </div>
           )}
@@ -256,8 +262,8 @@ export function DealStatusSection({
             isMediator={isMediator}
             buyerBalanceCentavos={buyerBalanceCentavos}
             hasActiveQr={hasActiveQr}
-            canCancelForNonDelivery={canCancelForNonDelivery}
-            cancelWaitMinutes={cancelWaitMinutes}
+            canCancelForNonDelivery={cancelEligibility.allowed}
+            cancelWaitMinutes={cancelEligibility.waitMinutes}
           />
 
           {eventsLoaded && events.length > 0 && (
