@@ -10,13 +10,13 @@ export async function applyTransferUpdate(
   const payload: {
     status: typeof update.status;
     transfer_id: string;
-    provider_reference_number?: string;
+    instruction_id?: string;
   } = {
     status: update.status,
     transfer_id: update.transferId,
   };
-  if (update.providerReferenceNumber) {
-    payload.provider_reference_number = update.providerReferenceNumber;
+  if (update.instructionId) {
+    payload.instruction_id = update.instructionId;
   }
 
   if (update.transferRowId) {

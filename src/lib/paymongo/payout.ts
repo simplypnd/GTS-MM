@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { createBatchTransfer } from "@/lib/paymongo/client";
+import { extractInstructionId } from "@/lib/paymongo/transferFields";
 import type { WithdrawalProvider } from "@/lib/wallet/withdrawal";
 import type { createServiceClient } from "@/lib/supabase/server";
 import type { PartyRole } from "@/lib/types/database";
@@ -86,7 +87,8 @@ export async function executePaymongoWithdrawal(
       .update({
         batch_transfer_id: result.data.id,
         transfer_id: transfer?.id,
-        provider_reference_number: transfer?.provider_reference_number ?? null,
+        instruction_id:
+          extractInstructionId(transfer?.metadata) ?? null,
         status: transfer?.status === "succeeded" ? "succeeded" : "pending",
       })
       .eq("id", row.id);

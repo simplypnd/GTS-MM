@@ -6,7 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { LocalizedTime } from "@/components/ui/LocalizedTime";
 import { cn, formatPHP } from "@/lib/utils";
 import type { WithdrawalTransfer } from "@/lib/types/database";
-import { maskAccountNumber } from "@/lib/wallet/withdrawal";
+import {
+  formatInstructionReference,
+  maskAccountNumber,
+} from "@/lib/wallet/withdrawal";
 import {
   withdrawalStatusBadgeVariant,
   withdrawalStatusLabel,
@@ -86,9 +89,9 @@ export function RecentWithdrawals({
               <div className="mt-2 rounded-md bg-zinc-50 p-3 text-xs dark:bg-zinc-800/50">
                 <dl className="space-y-2">
                   <DetailRow label="Reference">
-                    {t.provider_reference_number ? (
-                      <span className="break-all font-mono select-all">
-                        {t.provider_reference_number}
+                    {t.instruction_id ? (
+                      <span className="font-mono select-all">
+                        {formatInstructionReference(t.instruction_id)}
                       </span>
                     ) : (
                       <span className="text-zinc-500 dark:text-zinc-400">

@@ -109,7 +109,7 @@ export interface BatchTransferResponse {
       id: string;
       status: string;
       reference_number?: string;
-      provider_reference_number?: string | null;
+      metadata?: Record<string, unknown>;
     }>;
   };
 }
@@ -157,19 +157,23 @@ export async function createBatchTransfer(params: {
 
 export async function getTransfer(transferId: string) {
   return paymongoFetch<{
-    data: {
-      id?: string;
-      status?: string;
-      reference_number?: string;
-      provider_reference_number?: string | null;
-      attributes?: {
-        status?: string;
-        reference_number?: string;
-        provider_reference_number?: string | null;
-      };
-    };
+    data: PaymongoTransferApiData;
   }>(`/v2/transfers/${transferId}`);
 }
+
+export type PaymongoTransferApiData = {
+  id?: string;
+  status?: string;
+  reference_number?: string;
+  instruction_id?: string | null;
+  metadata?: unknown;
+  attributes?: {
+    status?: string;
+    reference_number?: string;
+    instruction_id?: string | null;
+    metadata?: unknown;
+  };
+};
 
 export type ReceivingInstitution = {
   provider_code: string;

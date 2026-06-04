@@ -3,30 +3,46 @@ export type PaymongoTransferResource = {
   id?: string;
   status?: string;
   reference_number?: string;
-  provider_reference_number?: string | null;
+  instruction_id?: string | null;
   metadata?: unknown;
   attributes?: {
     status?: string;
     reference_number?: string;
-    provider_reference_number?: string | null;
+    instruction_id?: string | null;
     metadata?: unknown;
   };
 };
+
+export function extractInstructionId(
+  metadata: unknown,
+  topLevelInstructionId?: string | null
+): string | undefined {
+  if (metadata && typeof metadata === "object") {
+    const id = (metadata as Record<string, unknown>).instruction_id;
+    if (typeof id === "string" && id.trim()) return id.trim();
+  }
+  if (
+    typeof topLevelInstructionId === "string" &&
+    topLevelInstructionId.trim()
+  ) {
+    return topLevelInstructionId.trim();
+  }
+  return undefined;
+}
 
 export function parsePaymongoTransferResource(
   data: PaymongoTransferResource | undefined
 ): {
   status?: string;
-  providerReferenceNumber?: string;
+  instructionId?: string;
 } {
   if (!data) return {};
   const attrs = data.attributes ?? data;
-  const providerRef = attrs.provider_reference_number;
   return {
     status: attrs.status ?? data.status,
-    providerReferenceNumber:
-      typeof providerRef === "string" && providerRef.trim()
-        ? providerRef.trim()
-        : undefined,
+    instructionId: extractInstructionId(
+      attrs.metadata ?? data.metadata,
+      attrs.instruction_id ?? data.instruction_id
+    ),
   };
 }

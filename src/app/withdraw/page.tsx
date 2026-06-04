@@ -73,7 +73,7 @@ export default function WithdrawPage() {
     const { data: transfers } = await supabase
       .from("paymongo_transfers")
       .select(
-        "id, amount_centavos, fee_centavos, provider, status, provider_reference_number, recipient_role, destination_snapshot, created_at, updated_at"
+        "id, amount_centavos, fee_centavos, provider, status, instruction_id, recipient_role, destination_snapshot, created_at, updated_at"
       )
       .eq("recipient_user_id", user.id)
       .eq("type", "withdrawal")

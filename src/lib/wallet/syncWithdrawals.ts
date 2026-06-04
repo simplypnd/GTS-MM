@@ -9,7 +9,7 @@ type TransferSyncRow = {
   id: string;
   transfer_id: string | null;
   status: string;
-  provider_reference_number: string | null;
+  instruction_id: string | null;
 };
 
 function mapPaymongoStatus(raw: string): TransferDbStatus {
@@ -30,14 +30,14 @@ async function refetchAndPatchTransferRow(
 
   if (row.status === "succeeded") {
     if (
-      !parsed.providerReferenceNumber ||
-      parsed.providerReferenceNumber === row.provider_reference_number
+      !parsed.instructionId ||
+      parsed.instructionId === row.instruction_id
     ) {
       return false;
     }
     const { error } = await supabase
       .from("paymongo_transfers")
-      .update({ provider_reference_number: parsed.providerReferenceNumber })
+      .update({ instruction_id: parsed.instructionId })
       .eq("id", row.id);
     return !error;
   }
@@ -48,17 +48,17 @@ async function refetchAndPatchTransferRow(
 
   const patch: {
     status?: TransferDbStatus;
-    provider_reference_number?: string;
+    instruction_id?: string;
   } = {};
 
   if (mapped !== "pending") {
     patch.status = mapped;
   }
   if (
-    parsed.providerReferenceNumber &&
-    parsed.providerReferenceNumber !== row.provider_reference_number
+    parsed.instructionId &&
+    parsed.instructionId !== row.instruction_id
   ) {
-    patch.provider_reference_number = parsed.providerReferenceNumber;
+    patch.instruction_id = parsed.instructionId;
   }
 
   if (Object.keys(patch).length === 0) return false;
@@ -96,25 +96,25 @@ export async function syncPendingWithdrawalsForUser(
 ): Promise<{ updated: number }> {
   const { data: pending } = await supabase
     .from("paymongo_transfers")
-    .select("id, transfer_id, status, provider_reference_number")
+    .select("id, transfer_id, status, instruction_id")
     .eq("recipient_user_id", userId)
     .eq("type", "withdrawal")
     .eq("status", "pending")
     .not("transfer_id", "is", null);
 
-  const { data: missingProviderRef } = await supabase
+  const { data: missingInstructionId } = await supabase
     .from("paymongo_transfers")
-    .select("id, transfer_id, status, provider_reference_number")
+    .select("id, transfer_id, status, instruction_id")
     .eq("recipient_user_id", userId)
     .eq("type", "withdrawal")
     .eq("status", "succeeded")
-    .is("provider_reference_number", null)
+    .is("instruction_id", null)
     .not("transfer_id", "is", null)
     .order("created_at", { ascending: false })
     .limit(10);
 
   const pendingRows = (pending ?? []) as TransferSyncRow[];
-  const backfillRows = (missingProviderRef ?? []) as TransferSyncRow[];
+  const backfillRows = (missingInstructionId ?? []) as TransferSyncRow[];
 
   const updated =
     (await syncTransferRows(supabase, pendingRows)) +

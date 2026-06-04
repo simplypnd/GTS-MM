@@ -1,3 +1,5 @@
+import { extractInstructionId } from "@/lib/paymongo/transferFields";
+
 export type TransferDbStatus = "pending" | "succeeded" | "failed";
 
 export type TransferUpdate = {
@@ -5,7 +7,7 @@ export type TransferUpdate = {
   status: TransferDbStatus;
   transferRowId?: string;
   referenceNumber?: string;
-  providerReferenceNumber?: string;
+  instructionId?: string;
 };
 
 function mapPaymongoStatus(raw: string | undefined): TransferDbStatus | null {
@@ -26,30 +28,27 @@ function parseMetadata(
   return typeof rowId === "string" ? { transfer_row_id: rowId } : undefined;
 }
 
-function providerRefFromObject(obj: {
-  provider_reference_number?: string | null;
-}): string | undefined {
-  const v = obj.provider_reference_number;
-  return typeof v === "string" && v.trim() ? v.trim() : undefined;
-}
-
 function fromTransferObject(obj: {
   id?: string;
   status?: string;
   reference_number?: string;
-  provider_reference_number?: string | null;
+  instruction_id?: string | null;
   metadata?: unknown;
 }): TransferUpdate | null {
   if (!obj.id?.startsWith("tr_")) return null;
   const status = mapPaymongoStatus(obj.status);
   if (!status) return null;
   const meta = parseMetadata(obj.metadata);
+  const instructionId = extractInstructionId(
+    obj.metadata,
+    obj.instruction_id
+  );
   return {
     transferId: obj.id,
     status,
     transferRowId: meta?.transfer_row_id,
     referenceNumber: obj.reference_number,
-    providerReferenceNumber: providerRefFromObject(obj),
+    instructionId,
   };
 }
 
@@ -66,7 +65,7 @@ export function extractTransferUpdate(event: unknown): TransferUpdate | null {
         id?: string;
         status?: string;
         reference_number?: string;
-        provider_reference_number?: string | null;
+        instruction_id?: string | null;
         metadata?: unknown;
       }
     );
@@ -79,13 +78,14 @@ export function extractTransferUpdate(event: unknown): TransferUpdate | null {
       status?: string;
       metadata?: unknown;
       reference_number?: string;
-      provider_reference_number?: string | null;
+      instruction_id?: string | null;
     };
     return fromTransferObject({
       id: data.id,
       status: attrs.status,
       metadata: attrs.metadata,
       reference_number: attrs.reference_number,
+      instruction_id: attrs.instruction_id,
     });
   }
 
@@ -100,7 +100,7 @@ export function extractTransferUpdate(event: unknown): TransferUpdate | null {
             status?: string;
             metadata?: unknown;
             reference_number?: string;
-            provider_reference_number?: string | null;
+            instruction_id?: string | null;
           };
         };
       }
@@ -113,6 +113,7 @@ export function extractTransferUpdate(event: unknown): TransferUpdate | null {
       status: attrs.status,
       metadata: attrs.metadata,
       reference_number: attrs.reference_number,
+      instruction_id: attrs.instruction_id,
     });
   }
 
@@ -120,9 +121,9 @@ export function extractTransferUpdate(event: unknown): TransferUpdate | null {
   const flatAttrs = data?.attributes as
     | {
         status?: string;
-        metadata?: { transfer_row_id?: string };
+        metadata?: { transfer_row_id?: string; instruction_id?: string };
         reference_number?: string;
-        provider_reference_number?: string | null;
+        instruction_id?: string | null;
       }
     | undefined;
   if (data?.id && typeof data.id === "string" && flatAttrs?.status) {
@@ -133,7 +134,10 @@ export function extractTransferUpdate(event: unknown): TransferUpdate | null {
       status,
       transferRowId: flatAttrs.metadata?.transfer_row_id,
       referenceNumber: flatAttrs.reference_number,
-      providerReferenceNumber: providerRefFromObject(flatAttrs),
+      instructionId: extractInstructionId(
+        flatAttrs.metadata,
+        flatAttrs.instruction_id
+      ),
     };
   }
 
