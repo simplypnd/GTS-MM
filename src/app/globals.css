@@ -92,3 +92,41 @@ body {
     @apply text-zinc-900 dark:text-zinc-100;
   }
 }
+
+@layer components {
+  .legal-document p {
+    @apply mb-4 text-base leading-7 text-zinc-700 dark:text-zinc-300;
+  }
+
+  .legal-document h2 {
+    @apply mt-10 mb-4 border-b border-zinc-200 pb-2 text-xl font-semibold text-zinc-900 dark:border-zinc-700 dark:text-zinc-100;
+  }
+
+  .legal-document h2:first-child {
+    @apply mt-0;
+  }
+
+  .legal-document h3 {
+    @apply mt-6 mb-2 text-lg font-medium text-zinc-900 dark:text-zinc-100;
+  }
+
+  .legal-document ul {
+    @apply my-4 list-disc space-y-2 pl-6;
+  }
+
+  .legal-document ol {
+    @apply my-4 list-decimal space-y-2 pl-6;
+  }
+
+  .legal-document li {
+    @apply leading-7 text-zinc-700 dark:text-zinc-300;
+  }
+
+  .legal-document a {
+    @apply font-medium text-zinc-900 underline underline-offset-2 hover:text-zinc-600 dark:text-zinc-100 dark:hover:text-zinc-300;
+  }
+
+  .legal-document strong {
+    @apply font-semibold text-foreground;
+  }
+}

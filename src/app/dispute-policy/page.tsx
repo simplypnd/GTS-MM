@@ -21,6 +21,7 @@ export default function DisputePolicyPage() {
       title="Dispute Policy"
       subtitle="Rules for escrow disputes and mediator resolutions"
       lastUpdated={LAST_UPDATED}
+      currentPath="/dispute-policy"
     >
       <p>
         This Dispute Policy (&quot;Policy&quot;) governs all disputes opened on

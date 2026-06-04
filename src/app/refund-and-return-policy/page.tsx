@@ -21,6 +21,7 @@ export default function RefundReturnPolicyPage() {
       title="Refund & Return Policy"
       subtitle="Terms governing escrow refunds and wallet credits"
       lastUpdated={LAST_UPDATED}
+      currentPath="/refund-and-return-policy"
     >
       <p>
         This Refund &amp; Return Policy (&quot;Policy&quot;) applies to all deals

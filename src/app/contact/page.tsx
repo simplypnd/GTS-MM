@@ -20,6 +20,8 @@ export default function ContactPage() {
         title="Contact Us"
         subtitle="Customer support for GTS MM escrow transactions"
         lastUpdated={LAST_UPDATED}
+        currentPath="/contact"
+        variant="support"
       >
         <p>
           This page describes how parties may contact GTS MM regarding account

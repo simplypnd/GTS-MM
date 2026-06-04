@@ -1,26 +1,16 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { profilePath } from "@/lib/utils";
 
 const linkClass =
   "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100";
 
-export async function SiteFooter() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  let displayName: string | null = null;
-  if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("display_name")
-      .eq("id", user.id)
-      .single();
-    displayName = profile?.display_name ?? null;
-  }
-
+export function SiteFooter({
+  isLoggedIn,
+  displayName,
+}: {
+  isLoggedIn: boolean;
+  displayName: string | null;
+}) {
   return (
     <footer className="border-t border-zinc-200 bg-zinc-50/80 pt-12 pb-8 dark:border-zinc-800 dark:bg-zinc-950/80">
       <div className="mx-auto grid max-w-5xl gap-8 px-4 sm:grid-cols-2 md:grid-cols-4">
@@ -36,7 +26,7 @@ export async function SiteFooter() {
             Product
           </p>
           <nav className="mt-3 flex flex-col gap-2 text-sm">
-            {user ? (
+            {isLoggedIn ? (
               <>
                 <Link href="/dashboard" className={linkClass}>
                   Dashboard
@@ -78,10 +68,10 @@ export async function SiteFooter() {
         </div>
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-            {user ? "Settings" : "Account"}
+            {isLoggedIn ? "Settings" : "Account"}
           </p>
           <nav className="mt-3 flex flex-col gap-2 text-sm">
-            {user ? (
+            {isLoggedIn ? (
               <>
                 <Link href="/settings/appearance" className={linkClass}>
                   Appearance

@@ -16,6 +16,13 @@ export type WithdrawalProvider = "instapay" | "pesonet";
 export type PaymentSource = "qrph" | "balance";
 export type ThemePreference = "light" | "dark";
 
+/** Layout/nav session fields loaded once per request for the signed-in user. */
+export type SessionProfile = {
+  display_name: string | null;
+  is_mediator: boolean;
+  theme_preference: ThemePreference | null;
+};
+
 /** display_name is the unique public username (case-insensitive). */
 export interface Profile {
   id: string;

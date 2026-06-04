@@ -131,51 +131,109 @@ function NavLinks({
   );
 }
 
-export function Navbar() {
+export function Navbar({
+  initialUserId = null,
+  initialDisplayName = null,
+  initialIsMediator = false,
+}: {
+  initialUserId?: string | null;
+  initialDisplayName?: string | null;
+  initialIsMediator?: boolean;
+}) {
   const router = useRouter();
   const menuRef = useRef<HTMLDivElement>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [isMediator, setIsMediator] = useState(false);
-  const [displayName, setDisplayName] = useState<string | null>(null);
+  const [isMediator, setIsMediator] = useState(initialIsMediator);
+  const [displayName, setDisplayName] = useState<string | null>(
+    initialDisplayName
+  );
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
+  const profileUserIdRef = useRef<string | null>(initialUserId);
 
   useEffect(() => {
     const supabase = createClient();
 
-    async function loadUser(currentUser: User | null) {
-      setUser(currentUser);
-      if (!currentUser) {
-        setIsMediator(false);
-        setDisplayName(null);
-        return;
-      }
+    function applyProfile(
+      userId: string,
+      profile: { is_mediator: boolean; display_name: string | null }
+    ) {
+      profileUserIdRef.current = userId;
+      setIsMediator(!!profile.is_mediator);
+      setDisplayName(profile.display_name);
+    }
+
+    function clearProfile() {
+      profileUserIdRef.current = null;
+      setIsMediator(false);
+      setDisplayName(null);
+    }
+
+    async function fetchProfile(userId: string) {
       const { data: profile } = await supabase
         .from("profiles")
         .select("is_mediator, display_name")
-        .eq("id", currentUser.id)
+        .eq("id", userId)
         .single();
-      setIsMediator(!!profile?.is_mediator);
-      setDisplayName(profile?.display_name ?? null);
+      applyProfile(userId, {
+        is_mediator: !!profile?.is_mediator,
+        display_name: profile?.display_name ?? null,
+      });
+    }
+
+    async function handleAuthUser(
+      currentUser: User | null,
+      event: string
+    ) {
+      setUser(currentUser);
+
+      if (!currentUser) {
+        clearProfile();
+        return;
+      }
+
+      const userId = currentUser.id;
+
+      if (event === "TOKEN_REFRESHED" && profileUserIdRef.current === userId) {
+        return;
+      }
+
+      if (profileUserIdRef.current === userId) {
+        return;
+      }
+
+      if (
+        userId === initialUserId &&
+        (initialDisplayName !== null || initialIsMediator)
+      ) {
+        applyProfile(userId, {
+          is_mediator: initialIsMediator,
+          display_name: initialDisplayName,
+        });
+        return;
+      }
+
+      await fetchProfile(userId);
     }
 
     supabase.auth.getUser().then(({ data: { user: currentUser } }) => {
-      void loadUser(currentUser);
+      void handleAuthUser(currentUser, "INITIAL_SESSION");
     });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      void loadUser(session?.user ?? null);
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      void handleAuthUser(session?.user ?? null, event);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [initialUserId, initialDisplayName, initialIsMediator]);
 
   async function handleSignOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
     setUser(null);
+    profileUserIdRef.current = null;
     setIsMediator(false);
     setDisplayName(null);
     router.push("/");
