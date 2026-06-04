@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ReferralLinkCopy } from "@/components/referrals/ReferralLinkCopy";
 import { ReferralFaqAccordion } from "@/components/referrals/ReferralFaqAccordion";
 import {
   REFERRAL_REWARD_BPS,
@@ -21,19 +19,9 @@ const STEPS = [
 
 type ReferralHookPageProps = {
   isLoggedIn: boolean;
-  referralUrl: string | null;
-  referralCode: string | null;
-  totalEarnedCentavos: number;
-  payoutCount: number;
 };
 
-export function ReferralHookPage({
-  isLoggedIn,
-  referralUrl,
-  referralCode,
-  totalEarnedCentavos,
-  payoutCount,
-}: ReferralHookPageProps) {
+export function ReferralHookPage({ isLoggedIn }: ReferralHookPageProps) {
   const rewardPercent = REFERRAL_REWARD_BPS / 100;
 
   return (
@@ -48,7 +36,17 @@ export function ReferralHookPage({
           you receive <strong>{rewardPercent}%</strong> of the deal value in your
           wallet—paid on completion, not at signup.
         </p>
-        {!isLoggedIn && (
+        {isLoggedIn ? (
+          <p className="mt-6 text-sm text-zinc-600 dark:text-zinc-400">
+            <Link
+              href="/referrals"
+              className="font-medium text-zinc-900 underline dark:text-zinc-100"
+            >
+              Go to Referrals dashboard
+            </Link>{" "}
+            to copy your invite link.
+          </p>
+        ) : (
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link href="/register">
               <Button size="lg">Create account</Button>
@@ -61,36 +59,6 @@ export function ReferralHookPage({
           </div>
         )}
       </section>
-
-      {isLoggedIn && referralUrl && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Your invite link</CardTitle>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              Code: <span className="font-mono font-medium">{referralCode}</span>
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <ReferralLinkCopy referralUrl={referralUrl} />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  Total earned
-                </p>
-                <p className="text-xl font-semibold">
-                  {formatPHP(totalEarnedCentavos)}
-                </p>
-              </div>
-              <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  Completed referral payouts
-                </p>
-                <p className="text-xl font-semibold">{payoutCount}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       <section>
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
@@ -152,7 +120,14 @@ export function ReferralHookPage({
 
       {!isLoggedIn && (
         <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
-          After you register, your personal referral link appears on this page.
+          After you register, your personal referral link is on the{" "}
+          <Link
+            href="/referrals"
+            className="font-medium text-zinc-900 underline dark:text-zinc-100"
+          >
+            Referrals
+          </Link>{" "}
+          page.
         </p>
       )}
     </div>

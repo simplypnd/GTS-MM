@@ -159,7 +159,8 @@ export default function RefundReturnPolicyPage() {
         Rewards are not paid on cancelled, refunded, or incomplete deals, nor
         where the referrer is a party to the same deal. Referral attribution is
         fixed at registration and cannot be changed afterward. Program details
-        are described on the <a href="/referrals">Referral program</a> page.
+        are described on the{" "}
+        <a href="/referrals/about">Referral program</a> page.
         GTS MM may modify or discontinue the program at any time.
       </p>
 
