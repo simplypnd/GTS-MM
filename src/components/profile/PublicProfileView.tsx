@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { ProfileRecentReviewCard } from "@/components/profile/ProfileRecentReviewCard";
+import type { ProfileLatestReview } from "@/components/profile/ProfileRecentReviewCard";
 import { ReputationSummary } from "@/components/profile/ReputationSummary";
 import { Badge } from "@/components/ui/badge";
 import { LocalizedTime } from "@/components/ui/LocalizedTime";
@@ -8,9 +10,11 @@ import type { PublicProfile } from "@/lib/types/database";
 export function PublicProfileView({
   profile,
   viewerId,
+  latestReview = null,
 }: {
   profile: PublicProfile;
   viewerId?: string | null;
+  latestReview?: ProfileLatestReview | null;
 }) {
   return (
     <div className="space-y-8">
@@ -38,10 +42,13 @@ export function PublicProfileView({
         </p>
       </header>
 
-      <ReputationSummary
-        positivePercent={profile.positive_percent}
-        reviewCount={profile.review_count}
-      />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(9rem,12rem)_minmax(0,1fr)] sm:items-stretch">
+        <ReputationSummary
+          positivePercent={profile.positive_percent}
+          reviewCount={profile.review_count}
+        />
+        <ProfileRecentReviewCard latestReview={latestReview} />
+      </div>
 
       <section>
         <h2 className="mb-3 text-lg font-semibold">Recent completed deals</h2>

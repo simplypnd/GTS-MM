@@ -1,0 +1,1 @@
+export const DASHBOARD_DEALS_PAGE_SIZE = 6;

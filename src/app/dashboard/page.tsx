@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { DealCard } from "@/components/deals/DealCard";
+import { DashboardDealsGrid } from "@/components/deals/DashboardDealsGrid";
 import { Button } from "@/components/ui/button";
 import { formatPHP } from "@/lib/utils";
 import type { Deal } from "@/lib/types/database";
@@ -29,9 +29,9 @@ export default async function DashboardPage() {
     ...(d as Deal),
     myRole:
       d.buyer_id === user.id
-        ? "buyer"
+        ? ("buyer" as const)
         : d.seller_id === user.id
-          ? "seller"
+          ? ("seller" as const)
           : undefined,
   }));
 
@@ -94,19 +94,7 @@ export default async function DashboardPage() {
             No deals yet. Create one to get started.
           </p>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {dealsWithRole.map((deal, i) => (
-              <div
-                key={deal.id}
-                className="motion-safe:animate-fade-in-up motion-reduce:animate-none"
-                style={{
-                  animationDelay: `${Math.min(i * 80, 400)}ms`,
-                }}
-              >
-                <DealCard deal={deal} myRole={deal.myRole} />
-              </div>
-            ))}
-          </div>
+          <DashboardDealsGrid deals={dealsWithRole} />
         )}
       </section>
     </div>
