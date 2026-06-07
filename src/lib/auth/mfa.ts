@@ -41,6 +41,22 @@ export async function userHasVerifiedTotpFactor(
   return (data.totp ?? []).some((f) => f.status === "verified");
 }
 
+/** Remove stale unverified TOTP factors so mfa.enroll can run again. */
+export async function clearUnverifiedTotpFactors(
+  supabase: SupabaseClient
+): Promise<void> {
+  const { data, error } = await supabase.auth.mfa.listFactors();
+  if (error || !data?.totp) return;
+
+  for (const factor of data.totp) {
+    // listFactors can return unverified factors at runtime; SDK types omit that status.
+    const status = factor.status as "verified" | "unverified";
+    if (status === "unverified") {
+      await supabase.auth.mfa.unenroll({ factorId: factor.id });
+    }
+  }
+}
+
 export async function assertAal2(supabase: SupabaseClient): Promise<void> {
   const state = await getMfaState(supabase);
   if (state.currentLevel !== "aal2") {

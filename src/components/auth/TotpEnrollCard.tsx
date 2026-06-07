@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { clearUnverifiedTotpFactors } from "@/lib/auth/mfa";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MfaVerifyForm } from "@/components/auth/MfaVerifyForm";
@@ -23,7 +24,13 @@ export function TotpEnrollCard({
   const startEnroll = useCallback(async () => {
     setEnrolling(true);
     setError(null);
+    setFactorId(null);
+    setQrCode(null);
+    setSecret(null);
+
     const supabase = createClient();
+    await clearUnverifiedTotpFactors(supabase);
+
     const { data, error: enrollError } = await supabase.auth.mfa.enroll({
       factorType: "totp",
       friendlyName: "Authenticator app",
@@ -104,8 +111,15 @@ export function TotpEnrollCard({
             error={error}
           />
         )}
+        {!factorId && !enrolling && error && (
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        )}
         {!factorId && !enrolling && (
-          <Button type="button" onClick={() => void startEnroll()}>
+          <Button
+            type="button"
+            disabled={enrolling}
+            onClick={() => void startEnroll()}
+          >
             Retry setup
           </Button>
         )}
