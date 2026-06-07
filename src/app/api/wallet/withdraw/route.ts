@@ -9,6 +9,8 @@ import {
   type WithdrawalProvider,
 } from "@/lib/wallet/withdrawal";
 import type { PartyRole } from "@/lib/types/database";
+import { loadAndAssertCanTransact } from "@/lib/admin/assertCanTransact";
+import { moderationErrorResponse } from "@/lib/admin/moderation";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -17,6 +19,17 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const service = await createServiceClient();
+  try {
+    await loadAndAssertCanTransact(service, user.id);
+  } catch (e) {
+    const mod = moderationErrorResponse(e);
+    if (mod) {
+      return NextResponse.json({ error: mod.error, code: mod.code }, { status: mod.status });
+    }
+    throw e;
   }
 
   const body = (await request.json()) as {
@@ -40,8 +53,6 @@ export async function POST(request: Request) {
   if (!amountValidation.ok) {
     return NextResponse.json({ error: amountValidation.error }, { status: 400 });
   }
-
-  const service = await createServiceClient();
 
   const { data: profile } = await service
     .from("profiles")

@@ -1,13 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RecentWithdrawals } from "@/components/wallet/RecentWithdrawals";
+import { PayoutAccountForm } from "@/components/wallet/PayoutAccountForm";
+import {
+  WalletPageTabs,
+  type WalletTab,
+} from "@/components/wallet/WalletPageTabs";
 import {
   getWithdrawalDebit,
   getWithdrawalFee,
@@ -27,7 +32,14 @@ const radioCardClass =
 const selectClass =
   "mt-1 flex h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100";
 
-export default function WithdrawPage() {
+function WithdrawPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const [tab, setTab] = useState<WalletTab>(
+    tabParam === "payouts" ? "payouts" : "withdraw"
+  );
+
   const [balanceCentavos, setBalanceCentavos] = useState(0);
   const [amountPesos, setAmountPesos] = useState("");
   const [provider, setProvider] = useState<WithdrawalProvider>("instapay");
@@ -37,6 +49,17 @@ export default function WithdrawPage() {
   const [recent, setRecent] = useState<WithdrawalTransfer[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (tabParam === "payouts") setTab("payouts");
+    else if (tabParam === "withdraw") setTab("withdraw");
+  }, [tabParam]);
+
+  function switchTab(next: WalletTab) {
+    setTab(next);
+    const url = next === "payouts" ? "/withdraw?tab=payouts" : "/withdraw";
+    router.replace(url, { scroll: false });
+  }
 
   const loadData = useCallback(async () => {
     const supabase = createClient();
@@ -140,168 +163,204 @@ export default function WithdrawPage() {
           Withdraw
         </h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Transfer your balance to your bank account.
+          Transfer your balance to your bank account or manage payout accounts.
         </p>
       </div>
 
-      <Card className={sectionEnter}>
-        <CardHeader>
-          <CardTitle className="text-base">Available balance</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-2xl font-semibold">{formatPHP(balanceCentavos)}</p>
-        </CardContent>
-      </Card>
+      <WalletPageTabs active={tab} onChange={switchTab} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Withdraw funds</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="amount">Amount to receive (PHP)</Label>
-              <Input
-                id="amount"
-                type="number"
-                min={MIN_WITHDRAWAL_CENTAVOS / 100}
-                step="0.01"
-                value={amountPesos}
-                onChange={(e) => setAmountPesos(e.target.value)}
-                placeholder="50.00"
-                required
-              />
-              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Minimum ₱50.00 to receive. InstaPay deducts ₱60.00 total (₱50 +
-                ₱10 fee). PESONet deducts ₱50.00.
+      {tab === "payouts" ? (
+        <div className="space-y-6">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Add the bank accounts where you receive withdrawals from your GTS MM
+            balance.
+          </p>
+          <PayoutAccountForm
+            partyRole="seller"
+            label="Payout account as Seller"
+            onSaved={() => void loadData()}
+          />
+          <PayoutAccountForm
+            partyRole="buyer"
+            label="Refund account as Buyer"
+            onSaved={() => void loadData()}
+          />
+        </div>
+      ) : (
+        <>
+          <Card className={sectionEnter}>
+            <CardHeader>
+              <CardTitle className="text-base">Available balance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-semibold">
+                {formatPHP(balanceCentavos)}
               </p>
-            </div>
+            </CardContent>
+          </Card>
 
-            <div>
-              <Label>Transfer method</Label>
-              <div className="mt-2 space-y-2">
-                <label className={radioCardClass}>
-                  <input
-                    type="radio"
-                    name="provider"
-                    value="instapay"
-                    checked={provider === "instapay"}
-                    onChange={() => setProvider("instapay")}
-                    className="mt-1"
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Withdraw funds</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="amount">Amount to receive (PHP)</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    min={MIN_WITHDRAWAL_CENTAVOS / 100}
+                    step="0.01"
+                    value={amountPesos}
+                    onChange={(e) => setAmountPesos(e.target.value)}
+                    placeholder="50.00"
+                    required
                   />
-                  <div>
-                    <span className="font-medium text-zinc-900 dark:text-zinc-100">
-                      InstaPay
-                    </span>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                      ₱{(INSTAPAY_FEE_CENTAVOS / 100).toFixed(0)} fee · usually
-                      reflects within minutes
-                    </p>
+                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                    Minimum ₱50.00 to receive. InstaPay deducts ₱60.00 total (₱50
+                    + ₱10 fee). PESONet deducts ₱50.00.
+                  </p>
+                </div>
+
+                <div>
+                  <Label>Transfer method</Label>
+                  <div className="mt-2 space-y-2">
+                    <label className={radioCardClass}>
+                      <input
+                        type="radio"
+                        name="provider"
+                        value="instapay"
+                        checked={provider === "instapay"}
+                        onChange={() => setProvider("instapay")}
+                        className="mt-1"
+                      />
+                      <div>
+                        <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                          InstaPay
+                        </span>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                          ₱{(INSTAPAY_FEE_CENTAVOS / 100).toFixed(0)} fee ·
+                          usually reflects within minutes
+                        </p>
+                      </div>
+                    </label>
+                    <label className={radioCardClass}>
+                      <input
+                        type="radio"
+                        name="provider"
+                        value="pesonet"
+                        checked={provider === "pesonet"}
+                        onChange={() => setProvider("pesonet")}
+                        className="mt-1"
+                      />
+                      <div>
+                        <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                          PESONet
+                        </span>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                          No fee · may take up to 1 business day
+                        </p>
+                      </div>
+                    </label>
                   </div>
-                </label>
-                <label className={radioCardClass}>
-                  <input
-                    type="radio"
-                    name="provider"
-                    value="pesonet"
-                    checked={provider === "pesonet"}
-                    onChange={() => setProvider("pesonet")}
-                    className="mt-1"
-                  />
+                </div>
+
+                {hasSellerAccount && hasBuyerAccount && (
                   <div>
-                    <span className="font-medium text-zinc-900 dark:text-zinc-100">
-                      PESONet
-                    </span>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                      No fee · may take up to 1 business day
-                    </p>
+                    <Label>Payout account</Label>
+                    <select
+                      className={selectClass}
+                      value={partyRole}
+                      onChange={(e) =>
+                        setPartyRole(e.target.value as PartyRole)
+                      }
+                    >
+                      <option value="seller">Seller account</option>
+                      <option value="buyer">Buyer account</option>
+                    </select>
                   </div>
-                </label>
-              </div>
-            </div>
-
-            {hasSellerAccount && hasBuyerAccount && (
-              <div>
-                <Label>Payout account</Label>
-                <select
-                  className={selectClass}
-                  value={partyRole}
-                  onChange={(e) => setPartyRole(e.target.value as PartyRole)}
-                >
-                  <option value="seller">Seller account</option>
-                  <option value="buyer">Buyer account</option>
-                </select>
-              </div>
-            )}
-
-            {amountCentavos > 0 && (
-              <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                You receive {formatPHP(amountCentavos)} · Total deducted:{" "}
-                {formatPHP(totalDebit)}
-                {feeCentavos > 0 && ` (includes ${formatPHP(feeCentavos)} fee)`}
-              </p>
-            )}
-            {amountCentavos > 0 && !amountValidation.ok && (
-              <p className="text-sm text-red-600 dark:text-red-400">
-                {amountValidation.error}
-              </p>
-            )}
-
-            {!hasSellerAccount && !hasBuyerAccount && (
-              <p className="text-sm text-amber-800 dark:text-amber-200">
-                Add a payout account in{" "}
-                <Link
-                  href="/settings/payouts"
-                  className="underline hover:text-amber-900 dark:hover:text-amber-100"
-                >
-                  Settings → Payouts
-                </Link>{" "}
-                before withdrawing.
-              </p>
-            )}
-
-            <Button
-              type="submit"
-              disabled={loading || !canSubmit}
-              className="w-full"
-              aria-busy={loading}
-            >
-              {loading ? (
-                <span className="inline-flex items-center gap-2">
-                  <LoadingSpinner />
-                  Processing…
-                </span>
-              ) : (
-                "Withdraw"
-              )}
-            </Button>
-
-            {message && (
-              <p
-                className={cn(
-                  "text-sm",
-                  message.includes("success")
-                    ? "text-emerald-700 dark:text-emerald-400"
-                    : "text-red-600 dark:text-red-400"
                 )}
-              >
-                {message}
-              </p>
-            )}
-          </form>
-        </CardContent>
-      </Card>
 
-      {recent.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Recent withdrawals</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RecentWithdrawals withdrawals={recent} />
-          </CardContent>
-        </Card>
+                {amountCentavos > 0 && (
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    You receive {formatPHP(amountCentavos)} · Total deducted:{" "}
+                    {formatPHP(totalDebit)}
+                    {feeCentavos > 0 &&
+                      ` (includes ${formatPHP(feeCentavos)} fee)`}
+                  </p>
+                )}
+                {amountCentavos > 0 && !amountValidation.ok && (
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {amountValidation.error}
+                  </p>
+                )}
+
+                {!hasSellerAccount && !hasBuyerAccount && (
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                    Add a payout account before withdrawing.{" "}
+                    <button
+                      type="button"
+                      className="underline hover:text-amber-900 dark:hover:text-amber-100"
+                      onClick={() => switchTab("payouts")}
+                    >
+                      Set up payout accounts
+                    </button>
+                  </p>
+                )}
+
+                <Button
+                  type="submit"
+                  disabled={loading || !canSubmit}
+                  className="w-full"
+                  aria-busy={loading}
+                >
+                  {loading ? (
+                    <span className="inline-flex items-center gap-2">
+                      <LoadingSpinner />
+                      Processing…
+                    </span>
+                  ) : (
+                    "Withdraw"
+                  )}
+                </Button>
+
+                {message && (
+                  <p
+                    className={cn(
+                      "text-sm",
+                      message.includes("success")
+                        ? "text-emerald-700 dark:text-emerald-400"
+                        : "text-red-600 dark:text-red-400"
+                    )}
+                  >
+                    {message}
+                  </p>
+                )}
+              </form>
+            </CardContent>
+          </Card>
+
+          {recent.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Recent withdrawals</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RecentWithdrawals withdrawals={recent} />
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
     </div>
+  );
+}
+
+export default function WithdrawPage() {
+  return (
+    <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
+      <WithdrawPageContent />
+    </Suspense>
   );
 }

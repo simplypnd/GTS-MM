@@ -15,6 +15,7 @@ export type TransferType = "release" | "refund" | "withdrawal";
 export type WithdrawalProvider = "instapay" | "pesonet";
 export type PaymentSource = "qrph" | "balance";
 export type ThemePreference = "light" | "dark";
+export type AccountStatus = "active" | "suspended" | "blocked";
 
 /** Layout/nav session fields loaded once per request for the signed-in user. */
 export type SessionProfile = {
@@ -35,6 +36,9 @@ export interface Profile {
   referred_by_user_id: string | null;
   phone: string | null;
   balance_centavos: number;
+  account_status?: AccountStatus;
+  funds_frozen?: boolean;
+  referral_reward_bps?: number | null;
   theme_preference: ThemePreference;
   created_at: string;
   updated_at: string;
@@ -67,6 +71,25 @@ export interface AdminPlatformStats {
     net_revenue_centavos: number;
   };
   buckets: AdminStatsBucket[];
+}
+
+export interface PlatformSettings {
+  id: number;
+  platform_fee_bps: number;
+  referral_reward_bps: number;
+  updated_at: string;
+}
+
+export interface AdminUserSummary {
+  id: string;
+  display_name: string;
+  balance_centavos: number;
+  account_status: AccountStatus;
+  funds_frozen: boolean;
+  referral_reward_bps: number | null;
+  referral_code: string;
+  is_admin: boolean;
+  created_at: string;
 }
 
 export interface Deal {

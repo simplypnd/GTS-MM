@@ -79,12 +79,12 @@ function NavLinks({
           Withdraw
         </Link>
         <Link
-          href="/settings/payouts"
+          href="/settings/security"
           className={linkClass}
           onClick={onNavigate}
           role="menuitem"
         >
-          Payouts
+          Security
         </Link>
         <Link
           href="/settings/appearance"

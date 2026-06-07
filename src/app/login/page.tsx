@@ -30,6 +30,15 @@ export default function LoginPage() {
       setLoading(false);
       return;
     }
+
+    const { getMfaState } = await import("@/lib/auth/mfa");
+    const mfaState = await getMfaState(supabase);
+    if (mfaState.needsVerification) {
+      router.push("/login/mfa");
+      router.refresh();
+      return;
+    }
+
     router.push("/dashboard");
     router.refresh();
   }

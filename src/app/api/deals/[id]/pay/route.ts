@@ -7,6 +7,8 @@ import {
 } from "@/lib/paymongo/client";
 import { isQrActive } from "@/lib/deals/paymentQr";
 import { logDealEvent } from "@/lib/escrow/events";
+import { loadAndAssertCanTransact } from "@/lib/admin/assertCanTransact";
+import { moderationErrorResponse } from "@/lib/admin/moderation";
 
 export async function POST(
   _request: Request,
@@ -19,6 +21,17 @@ export async function POST(
   } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const service = await createServiceClient();
+  try {
+    await loadAndAssertCanTransact(service, user.id);
+  } catch (e) {
+    const mod = moderationErrorResponse(e);
+    if (mod) {
+      return NextResponse.json({ error: mod.error, code: mod.code }, { status: mod.status });
+    }
+    throw e;
   }
 
   const { data: deal, error } = await supabase
@@ -52,7 +65,6 @@ export async function POST(
       .eq("id", dealId);
   }
 
-  const service = await createServiceClient();
   const { data: existing } = await service
     .from("paymongo_payments")
     .select("payment_intent_id, qr_image_url, expires_at, status")

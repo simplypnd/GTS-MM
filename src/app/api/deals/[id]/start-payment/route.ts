@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { assertTransition } from "@/lib/escrow/dealState";
 import { logDealEvent } from "@/lib/escrow/events";
+import { loadAndAssertCanTransact } from "@/lib/admin/assertCanTransact";
+import { moderationErrorResponse } from "@/lib/admin/moderation";
 
 export async function POST(
   _request: Request,
@@ -14,6 +16,17 @@ export async function POST(
   } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const service = await createServiceClient();
+  try {
+    await loadAndAssertCanTransact(service, user.id);
+  } catch (e) {
+    const mod = moderationErrorResponse(e);
+    if (mod) {
+      return NextResponse.json({ error: mod.error, code: mod.code }, { status: mod.status });
+    }
+    throw e;
   }
 
   const { data: deal } = await supabase
@@ -51,7 +64,6 @@ export async function POST(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const service = await createServiceClient();
   await logDealEvent(service, {
     dealId: id,
     actorId: user.id,

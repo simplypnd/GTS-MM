@@ -79,7 +79,10 @@ export function SiteFooter({
                 <Link href="/settings/appearance" className={linkClass}>
                   Appearance
                 </Link>
-                <Link href="/settings/payouts" className={linkClass}>
+                <Link href="/settings/security" className={linkClass}>
+                  Security
+                </Link>
+                <Link href="/withdraw?tab=payouts" className={linkClass}>
                   Payout accounts
                 </Link>
                 {displayName ? (

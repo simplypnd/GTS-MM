@@ -1,6 +1,44 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isRecoveryUser } from "@/lib/auth/recovery";
+import { getMfaState, userHasVerifiedTotpFactor } from "@/lib/auth/mfa";
+
+const MFA_ALLOWLIST_PREFIXES = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/auth/callback",
+  "/account-blocked",
+  "/settings/security",
+  "/api/auth/signout",
+];
+
+const PROTECTED_PREFIXES = [
+  "/dashboard",
+  "/deals",
+  "/disputes",
+  "/settings",
+  "/withdraw",
+  "/referrals",
+  "/admin",
+];
+
+function pathMatches(pathname: string, prefixes: string[]): boolean {
+  return prefixes.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  );
+}
+
+function isMfaAllowlisted(pathname: string): boolean {
+  if (pathMatches(pathname, MFA_ALLOWLIST_PREFIXES)) return true;
+  if (pathname.startsWith("/api/auth")) return true;
+  return false;
+}
+
+function isProtectedPath(pathname: string): boolean {
+  return pathMatches(pathname, PROTECTED_PREFIXES);
+}
 
 export async function updateSession(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
@@ -43,19 +81,14 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const pathname = request.nextUrl.pathname;
   const isAuth =
-    request.nextUrl.pathname.startsWith("/login") ||
-    request.nextUrl.pathname.startsWith("/register") ||
-    request.nextUrl.pathname.startsWith("/forgot-password");
-  const isProtected =
-    request.nextUrl.pathname.startsWith("/dashboard") ||
-    request.nextUrl.pathname.startsWith("/deals") ||
-    request.nextUrl.pathname.startsWith("/disputes") ||
-    request.nextUrl.pathname.startsWith("/settings") ||
-    request.nextUrl.pathname.startsWith("/withdraw");
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/register") ||
+    pathname.startsWith("/forgot-password");
 
   if (user && isRecoveryUser(user)) {
-    if (!request.nextUrl.pathname.startsWith("/reset-password")) {
+    if (!pathname.startsWith("/reset-password")) {
       const url = request.nextUrl.clone();
       url.pathname = "/reset-password";
       url.search = "";
@@ -65,42 +98,75 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
-  if (!user && isProtected) {
+  if (!user && isProtectedPath(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuth) {
+  if (user && isAuth && !pathname.startsWith("/login/mfa")) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 
-  if (user && request.nextUrl.pathname.startsWith("/disputes")) {
+  if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("is_mediator")
+      .select("is_mediator, is_admin, account_status")
       .eq("id", user.id)
       .single();
 
-    if (!profile?.is_mediator) {
+    if (
+      profile?.account_status === "blocked" &&
+      !pathname.startsWith("/account-blocked") &&
+      !pathname.startsWith("/api/auth/signout")
+    ) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/account-blocked";
+      return NextResponse.redirect(url);
+    }
+
+    if (user && pathname.startsWith("/disputes") && !profile?.is_mediator) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
       return NextResponse.redirect(url);
     }
-  }
 
-  if (user && request.nextUrl.pathname.startsWith("/admin")) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_admin")
-      .eq("id", user.id)
-      .single();
+    const mfaState = await getMfaState(supabase);
+    const isAdmin = !!profile?.is_admin;
 
-    if (!profile?.is_admin) {
+    if (pathname.startsWith("/admin")) {
+      if (!isAdmin) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/dashboard";
+        return NextResponse.redirect(url);
+      }
+
+      const hasTotp = await userHasVerifiedTotpFactor(supabase);
+      if (!hasTotp) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/settings/security";
+        url.searchParams.set("admin_required", "1");
+        return NextResponse.redirect(url);
+      }
+
+      if (mfaState.currentLevel !== "aal2") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/login/mfa";
+        url.searchParams.set("next", pathname);
+        return NextResponse.redirect(url);
+      }
+    }
+
+    if (
+      isProtectedPath(pathname) &&
+      !isMfaAllowlisted(pathname) &&
+      mfaState.needsVerification
+    ) {
       const url = request.nextUrl.clone();
-      url.pathname = "/dashboard";
+      url.pathname = "/login/mfa";
+      url.searchParams.set("next", pathname);
       return NextResponse.redirect(url);
     }
   }

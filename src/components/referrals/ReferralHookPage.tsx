@@ -92,7 +92,7 @@ export function ReferralHookPage({ isLoggedIn }: ReferralHookPageProps) {
                 <tr key={cents}>
                   <td className="px-4 py-3">{formatPHP(cents)}</td>
                   <td className="px-4 py-3 text-right font-medium">
-                    {formatPHP(computeReferralReward(cents))}
+                    {formatPHP(computeReferralReward(cents, REFERRAL_REWARD_BPS))}
                   </td>
                 </tr>
               ))}
