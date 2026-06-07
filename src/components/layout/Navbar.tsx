@@ -63,14 +63,6 @@ function NavLinks({
           New deal
         </Link>
         <Link
-          href="/referrals"
-          className={linkClass}
-          onClick={onNavigate}
-          role="menuitem"
-        >
-          Referrals
-        </Link>
-        <Link
           href="/withdraw"
           className={linkClass}
           onClick={onNavigate}
@@ -79,20 +71,12 @@ function NavLinks({
           Withdraw
         </Link>
         <Link
-          href="/settings/security"
+          href="/settings"
           className={linkClass}
           onClick={onNavigate}
           role="menuitem"
         >
-          Security
-        </Link>
-        <Link
-          href="/settings/appearance"
-          className={linkClass}
-          onClick={onNavigate}
-          role="menuitem"
-        >
-          Appearance
+          Settings
         </Link>
         {isMediator && (
           <Link

@@ -76,11 +76,8 @@ export function SiteFooter({
           <nav className="mt-3 flex flex-col gap-2 text-sm">
             {isLoggedIn ? (
               <>
-                <Link href="/settings/appearance" className={linkClass}>
-                  Appearance
-                </Link>
-                <Link href="/settings/security" className={linkClass}>
-                  Security
+                <Link href="/settings" className={linkClass}>
+                  Settings
                 </Link>
                 <Link href="/withdraw?tab=payouts" className={linkClass}>
                   Payout accounts

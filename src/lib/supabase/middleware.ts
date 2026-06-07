@@ -10,7 +10,7 @@ const MFA_ALLOWLIST_PREFIXES = [
   "/reset-password",
   "/auth/callback",
   "/account-blocked",
-  "/settings/security",
+  "/settings",
   "/api/auth/signout",
 ];
 
@@ -146,7 +146,8 @@ export async function updateSession(request: NextRequest) {
       const hasTotp = await userHasVerifiedTotpFactor(supabase);
       if (!hasTotp) {
         const url = request.nextUrl.clone();
-        url.pathname = "/settings/security";
+        url.pathname = "/settings";
+        url.searchParams.set("tab", "security");
         url.searchParams.set("admin_required", "1");
         return NextResponse.redirect(url);
       }

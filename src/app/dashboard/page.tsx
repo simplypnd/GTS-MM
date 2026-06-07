@@ -53,7 +53,7 @@ export default async function DashboardPage() {
 
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
         <Link
-          href="/referrals"
+          href="/settings?tab=referrals"
           className="flex-1 min-w-[12rem] rounded-lg border border-emerald-200 bg-emerald-50 p-4 motion-safe:transition-shadow motion-safe:hover:shadow-md dark:border-emerald-900/50 dark:bg-emerald-950/40"
         >
           <p className="text-sm font-medium text-emerald-900 dark:text-emerald-100">

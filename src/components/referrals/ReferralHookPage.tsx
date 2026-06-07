@@ -39,7 +39,7 @@ export function ReferralHookPage({ isLoggedIn }: ReferralHookPageProps) {
         {isLoggedIn ? (
           <p className="mt-6 text-sm text-zinc-600 dark:text-zinc-400">
             <Link
-              href="/referrals"
+              href="/settings?tab=referrals"
               className="font-medium text-zinc-900 underline dark:text-zinc-100"
             >
               Go to Referrals dashboard
@@ -122,7 +122,7 @@ export function ReferralHookPage({ isLoggedIn }: ReferralHookPageProps) {
         <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
           After you register, your personal referral link is on the{" "}
           <Link
-            href="/referrals"
+            href="/settings?tab=referrals"
             className="font-medium text-zinc-900 underline dark:text-zinc-100"
           >
             Referrals
