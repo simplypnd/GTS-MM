@@ -16,21 +16,28 @@ export function SettingsSecuritySection() {
   const searchParams = useSearchParams();
   const adminRequired = searchParams.get("admin_required") === "1";
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminLoading, setAdminLoading] = useState(true);
   const [showEnroll, setShowEnroll] = useState(false);
   const { factors, loading, reload } = useTotpFactors();
 
   const loadAdmin = useCallback(async () => {
+    setAdminLoading(true);
     const supabase = createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      setIsAdmin(false);
+      setAdminLoading(false);
+      return;
+    }
     const { data } = await supabase
       .from("profiles")
       .select("is_admin")
       .eq("id", user.id)
       .single();
     setIsAdmin(!!data?.is_admin);
+    setAdminLoading(false);
   }, []);
 
   useEffect(() => {
@@ -60,7 +67,7 @@ export function SettingsSecuritySection() {
         {isAdmin && " Required for admin access."}
       </p>
 
-      {loading ? (
+      {loading || adminLoading ? (
         <p className="text-sm text-zinc-500">Loading…</p>
       ) : factors.length > 0 && !showEnroll ? (
         <Card>
@@ -103,7 +110,7 @@ export function SettingsSecuritySection() {
         />
       )}
 
-      {factors.length > 0 && !showEnroll && !isAdmin && (
+      {!adminLoading && factors.length > 0 && !showEnroll && !isAdmin && (
         <Button type="button" variant="outline" onClick={() => setShowEnroll(true)}>
           Add another device
         </Button>

@@ -39,11 +39,12 @@ function SettingsPageContent() {
 
       <SettingsPageTabs active={tab} onChange={switchTab} />
 
-      {tab === "security" ? (
+      <div className={tab !== "security" ? "hidden" : undefined}>
         <SettingsSecuritySection />
-      ) : (
+      </div>
+      <div className={tab !== "referrals" ? "hidden" : undefined}>
         <SettingsReferralsSection />
-      )}
+      </div>
     </div>
   );
 }
