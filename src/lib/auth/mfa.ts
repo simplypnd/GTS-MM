@@ -46,13 +46,23 @@ export async function clearUnverifiedTotpFactors(
   supabase: SupabaseClient
 ): Promise<void> {
   const { data, error } = await supabase.auth.mfa.listFactors();
-  if (error || !data?.totp) return;
+  if (error || !data?.all) return;
 
-  for (const factor of data.totp) {
-    // listFactors can return unverified factors at runtime; SDK types omit that status.
+  for (const factor of data.all) {
+    if (factor.factor_type !== "totp") continue;
+    // Unverified factors appear in data.all only; data.totp is verified-only.
     const status = factor.status as "verified" | "unverified";
-    if (status === "unverified") {
-      await supabase.auth.mfa.unenroll({ factorId: factor.id });
+    if (status !== "unverified") continue;
+
+    const { error: unenrollError } = await supabase.auth.mfa.unenroll({
+      factorId: factor.id,
+    });
+    if (unenrollError) {
+      console.warn(
+        "Failed to unenroll stale TOTP factor:",
+        factor.id,
+        unenrollError.message
+      );
     }
   }
 }
