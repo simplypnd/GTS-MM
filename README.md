@@ -128,3 +128,15 @@ Users cannot set `is_mediator` on themselves; the database rejects self-updates 
 ## Compliance
 
 Operators should ensure compliance with applicable Philippine payment and fund-holding regulations before production deployment.
+
+## Troubleshooting
+
+### 502 or stuck login (stale session cookies)
+
+If the app shows **502 Bad Gateway** or fails to load while **incognito works**, the browser likely has stale Supabase auth cookies (`sb-*`). The middleware clears invalid sessions automatically on deploy; users can also:
+
+1. Sign out (if the page loads) or visit `/api/auth/signout` via POST from the app.
+2. Clear site cookies for your domain in browser settings.
+3. Use a private/incognito window and sign in again.
+
+On **nginx** (EC2), if errors persist with very large cookie headers, add `large_client_header_buffers 4 16k;` to the server block as a safety net.
