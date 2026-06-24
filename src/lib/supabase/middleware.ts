@@ -6,7 +6,10 @@ import {
   clearSupabaseAuthCookies,
   copyCookies,
   hasSupabaseAuthCookies,
+  redirectToClearSession,
   redirectWithSessionCookies,
+  safeRedirectTarget,
+  shouldRedirectForOversizedCookies,
 } from "@/lib/supabase/auth-cookies";
 
 const MFA_ALLOWLIST_PREFIXES = [
@@ -30,6 +33,15 @@ const PROTECTED_PREFIXES = [
   "/admin",
 ];
 
+const AUTH_INLINE_CLEAR_PREFIXES = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/auth/callback",
+  "/api/auth/signout",
+];
+
 function pathMatches(pathname: string, prefixes: string[]): boolean {
   return prefixes.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`)
@@ -46,30 +58,62 @@ function isProtectedPath(pathname: string): boolean {
   return pathMatches(pathname, PROTECTED_PREFIXES);
 }
 
+function isAuthInlineClearPath(pathname: string): boolean {
+  return pathMatches(pathname, AUTH_INLINE_CLEAR_PREFIXES);
+}
+
 function handleInvalidSession(
   request: NextRequest,
   supabaseResponse: NextResponse,
   pathname: string
 ): NextResponse {
+  if (isAuthInlineClearPath(pathname)) {
+    const response = NextResponse.next({ request });
+    copyCookies(supabaseResponse, response);
+    clearSupabaseAuthCookies(response, request);
+    return response;
+  }
+
   if (isProtectedPath(pathname)) {
-    const redirect = redirectWithSessionCookies(
-      request,
-      supabaseResponse,
-      "/login",
-      { session: "expired" }
-    );
+    const url = new URL("/api/auth/clear-session", request.url);
+    url.searchParams.set("redirect", "/login?session=expired");
+    const redirect = NextResponse.redirect(url);
     clearSupabaseAuthCookies(redirect, request);
     return redirect;
   }
 
-  const response = NextResponse.next({ request });
-  copyCookies(supabaseResponse, response);
-  clearSupabaseAuthCookies(response, request);
-  return response;
+  return redirectToClearSession(request, pathname);
+}
+
+function handleStaleCookies(
+  request: NextRequest,
+  supabaseResponse: NextResponse,
+  pathname: string
+): NextResponse | null {
+  if (isAuthInlineClearPath(pathname)) {
+    clearSupabaseAuthCookies(supabaseResponse, request);
+    return null;
+  }
+  return redirectToClearSession(request, pathname);
 }
 
 export async function updateSession(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
   try {
+    if (pathname === "/api/auth/clear-session") {
+      const target = safeRedirectTarget(
+        request.nextUrl.searchParams.get("redirect")
+      );
+      const res = NextResponse.redirect(new URL(target, request.url));
+      clearSupabaseAuthCookies(res, request);
+      return res;
+    }
+
+    if (shouldRedirectForOversizedCookies(request)) {
+      return redirectToClearSession(request, pathname);
+    }
+
     const code = request.nextUrl.searchParams.get("code");
     const token_hash = request.nextUrl.searchParams.get("token_hash");
     if (code || token_hash) {
@@ -111,14 +155,17 @@ export async function updateSession(request: NextRequest) {
       error: authError,
     } = await supabase.auth.getUser();
 
-    const pathname = request.nextUrl.pathname;
-
     if (authError) {
       return handleInvalidSession(request, supabaseResponse, pathname);
     }
 
     if (!user && hasSupabaseAuthCookies(request)) {
-      clearSupabaseAuthCookies(supabaseResponse, request);
+      const staleRedirect = handleStaleCookies(
+        request,
+        supabaseResponse,
+        pathname
+      );
+      if (staleRedirect) return staleRedirect;
     }
 
     const isAuth =
@@ -218,13 +265,20 @@ export async function updateSession(request: NextRequest) {
 
     return supabaseResponse;
   } catch {
-    const pathname = request.nextUrl.pathname;
-    const response = isProtectedPath(pathname)
-      ? NextResponse.redirect(
-          new URL("/login?session=expired", request.url)
-        )
-      : NextResponse.next({ request });
-    clearSupabaseAuthCookies(response, request);
-    return response;
+    if (isAuthInlineClearPath(pathname)) {
+      const response = NextResponse.next({ request });
+      clearSupabaseAuthCookies(response, request);
+      return response;
+    }
+
+    if (isProtectedPath(pathname)) {
+      const url = new URL("/api/auth/clear-session", request.url);
+      url.searchParams.set("redirect", "/login?session=expired");
+      const response = NextResponse.redirect(url);
+      clearSupabaseAuthCookies(response, request);
+      return response;
+    }
+
+    return redirectToClearSession(request, pathname);
   }
 }

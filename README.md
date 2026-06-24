@@ -133,10 +133,18 @@ Operators should ensure compliance with applicable Philippine payment and fund-h
 
 ### 502 or stuck login (stale session cookies)
 
-If the app shows **502 Bad Gateway** or fails to load while **incognito works**, the browser likely has stale Supabase auth cookies (`sb-*`). The middleware clears invalid sessions automatically on deploy; users can also:
+If the app shows **502 Bad Gateway** or fails to load while **incognito works**, the browser likely has stale Supabase auth cookies (`sb-*`). After deploy, middleware redirects bad sessions through **`/api/auth/clear-session`** before rendering pages. Users can also recover manually:
 
-1. Sign out (if the page loads) or visit `/api/auth/signout` via POST from the app.
-2. Clear site cookies for your domain in browser settings.
-3. Use a private/incognito window and sign in again.
+1. Open **`/api/auth/clear-session?redirect=/`** (or `?redirect=/login`) in the browser — clears auth cookies and redirects.
+2. Sign out (if the page loads) or use **Clear session** on the login page when `session=expired` is shown.
+3. Clear site cookies for your domain in browser settings.
+4. Use a private/incognito window and sign in again.
 
-On **nginx** (EC2), if errors persist with very large cookie headers, add `large_client_header_buffers 4 16k;` to the server block as a safety net.
+On **nginx** (EC2), if errors persist with very large cookie headers (before Node runs), add to the server block:
+
+```nginx
+client_header_buffer_size 8k;
+large_client_header_buffers 4 16k;
+```
+
+Then `sudo nginx -t && sudo systemctl reload nginx`.

@@ -1,14 +1,24 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
-import { clearSupabaseAuthCookies } from "@/lib/supabase/auth-cookies";
+import {
+  clearSupabaseAuthCookies,
+  redirectToClearSession,
+} from "@/lib/supabase/auth-cookies";
 
 export async function middleware(request: NextRequest) {
   try {
     return await updateSession(request);
   } catch {
-    const response = NextResponse.redirect(
-      new URL("/login?session=expired", request.url)
-    );
+    const pathname = request.nextUrl.pathname;
+    const redirectPath =
+      pathname.startsWith("/dashboard") ||
+      pathname.startsWith("/deals") ||
+      pathname.startsWith("/admin") ||
+      pathname.startsWith("/settings") ||
+      pathname.startsWith("/withdraw")
+        ? "/login?session=expired"
+        : pathname || "/";
+    const response = redirectToClearSession(request, redirectPath);
     clearSupabaseAuthCookies(response, request);
     return response;
   }

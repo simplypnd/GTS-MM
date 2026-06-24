@@ -53,9 +53,20 @@ function LoginForm() {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {sessionExpired && !error && (
-            <p className="text-sm text-amber-800 dark:text-amber-200">
-              Your session expired. Please sign in again.
-            </p>
+            <div className="space-y-2">
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                Your session expired. Please sign in again.
+              </p>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                Still having trouble?{" "}
+                <Link
+                  href="/api/auth/clear-session?redirect=/login"
+                  className="font-medium underline"
+                >
+                  Clear session
+                </Link>
+              </p>
+            </div>
           )}
           <div>
             <Label htmlFor="email">Email</Label>

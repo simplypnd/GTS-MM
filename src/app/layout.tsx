@@ -6,7 +6,7 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { ThemeScript } from "@/components/theme/ThemeScript";
 import { ThemeSync } from "@/components/theme/ThemeSync";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getServerUser } from "@/lib/supabase/server";
 import type { SessionProfile, ThemePreference } from "@/lib/types/database";
 import "./globals.css";
 
@@ -61,10 +61,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user } = await getServerUser();
 
   const sessionProfile = user ? await loadSessionProfile(user.id) : null;
 
