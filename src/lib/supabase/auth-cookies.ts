@@ -2,6 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const COOKIE_HEADER_LIMIT = 6144;
 
+export const SESSION_CLEARED_PARAM = "session_cleared";
+export const CLEAR_SESSION_LOGIN_REDIRECT = "/login?session=expired";
+
 /** Supabase SSR auth cookies: sb-<project-ref>-auth-token[.N] */
 export function isSupabaseAuthCookie(name: string): boolean {
   return name.startsWith("sb-");
@@ -9,6 +12,18 @@ export function isSupabaseAuthCookie(name: string): boolean {
 
 export function hasSupabaseAuthCookies(request: NextRequest): boolean {
   return request.cookies.getAll().some((c) => isSupabaseAuthCookie(c.name));
+}
+
+export function hasSessionClearedFlag(request: NextRequest): boolean {
+  return request.nextUrl.searchParams.get(SESSION_CLEARED_PARAM) === "1";
+}
+
+export function appendSessionClearedFlag(path: string): string {
+  const qIndex = path.indexOf("?");
+  const pathname = qIndex === -1 ? path : path.slice(0, qIndex);
+  const params = new URLSearchParams(qIndex === -1 ? "" : path.slice(qIndex + 1));
+  params.set(SESSION_CLEARED_PARAM, "1");
+  return `${pathname}?${params.toString()}`;
 }
 
 export function clearSupabaseAuthCookies(

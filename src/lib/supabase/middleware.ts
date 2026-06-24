@@ -3,9 +3,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isRecoveryUser } from "@/lib/auth/recovery";
 import { getMfaState, userHasVerifiedTotpFactor } from "@/lib/auth/mfa";
 import {
+  CLEAR_SESSION_LOGIN_REDIRECT,
   clearSupabaseAuthCookies,
   copyCookies,
+  hasSessionClearedFlag,
   hasSupabaseAuthCookies,
+  appendSessionClearedFlag,
   redirectToClearSession,
   redirectWithSessionCookies,
   safeRedirectTarget,
@@ -62,39 +65,84 @@ function isAuthInlineClearPath(pathname: string): boolean {
   return pathMatches(pathname, AUTH_INLINE_CLEAR_PREFIXES);
 }
 
+function shouldClearInline(
+  request: NextRequest,
+  pathname: string
+): boolean {
+  return (
+    hasSessionClearedFlag(request) ||
+    isAuthInlineClearPath(pathname) ||
+    !isProtectedPath(pathname)
+  );
+}
+
+function inlineClearAndContinue(
+  request: NextRequest,
+  supabaseResponse: NextResponse
+): NextResponse {
+  const response = NextResponse.next({ request });
+  copyCookies(supabaseResponse, response);
+  clearSupabaseAuthCookies(response, request);
+  return response;
+}
+
+function redirectToProtectedClearSession(
+  request: NextRequest,
+  supabaseResponse?: NextResponse
+): NextResponse {
+  const url = new URL("/api/auth/clear-session", request.url);
+  url.searchParams.set("redirect", CLEAR_SESSION_LOGIN_REDIRECT);
+  const redirect = NextResponse.redirect(url);
+  if (supabaseResponse) {
+    copyCookies(supabaseResponse, redirect);
+  }
+  clearSupabaseAuthCookies(redirect, request);
+  return redirect;
+}
+
 function handleInvalidSession(
   request: NextRequest,
   supabaseResponse: NextResponse,
   pathname: string
 ): NextResponse {
-  if (isAuthInlineClearPath(pathname)) {
-    const response = NextResponse.next({ request });
-    copyCookies(supabaseResponse, response);
-    clearSupabaseAuthCookies(response, request);
-    return response;
+  if (shouldClearInline(request, pathname)) {
+    return inlineClearAndContinue(request, supabaseResponse);
   }
-
-  if (isProtectedPath(pathname)) {
-    const url = new URL("/api/auth/clear-session", request.url);
-    url.searchParams.set("redirect", "/login?session=expired");
-    const redirect = NextResponse.redirect(url);
-    clearSupabaseAuthCookies(redirect, request);
-    return redirect;
-  }
-
-  return redirectToClearSession(request, pathname);
+  return redirectToProtectedClearSession(request, supabaseResponse);
 }
 
-function handleStaleCookies(
-  request: NextRequest,
-  supabaseResponse: NextResponse,
-  pathname: string
-): NextResponse | null {
-  if (isAuthInlineClearPath(pathname)) {
-    clearSupabaseAuthCookies(supabaseResponse, request);
-    return null;
+async function handleClearSessionRequest(
+  request: NextRequest
+): Promise<NextResponse> {
+  const target = appendSessionClearedFlag(
+    safeRedirectTarget(request.nextUrl.searchParams.get("redirect"))
+  );
+  let response = NextResponse.redirect(new URL(target, request.url));
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
+    }
+  );
+
+  try {
+    await supabase.auth.signOut();
+  } catch {
+    clearSupabaseAuthCookies(response, request);
   }
-  return redirectToClearSession(request, pathname);
+
+  return response;
 }
 
 export async function updateSession(request: NextRequest) {
@@ -102,16 +150,11 @@ export async function updateSession(request: NextRequest) {
 
   try {
     if (pathname === "/api/auth/clear-session") {
-      const target = safeRedirectTarget(
-        request.nextUrl.searchParams.get("redirect")
-      );
-      const res = NextResponse.redirect(new URL(target, request.url));
-      clearSupabaseAuthCookies(res, request);
-      return res;
+      return handleClearSessionRequest(request);
     }
 
     if (shouldRedirectForOversizedCookies(request)) {
-      return redirectToClearSession(request, pathname);
+      return redirectToClearSession(request, CLEAR_SESSION_LOGIN_REDIRECT);
     }
 
     const code = request.nextUrl.searchParams.get("code");
@@ -160,12 +203,11 @@ export async function updateSession(request: NextRequest) {
     }
 
     if (!user && hasSupabaseAuthCookies(request)) {
-      const staleRedirect = handleStaleCookies(
-        request,
-        supabaseResponse,
-        pathname
-      );
-      if (staleRedirect) return staleRedirect;
+      if (shouldClearInline(request, pathname)) {
+        clearSupabaseAuthCookies(supabaseResponse, request);
+      } else {
+        return redirectToProtectedClearSession(request, supabaseResponse);
+      }
     }
 
     const isAuth =
@@ -265,20 +307,11 @@ export async function updateSession(request: NextRequest) {
 
     return supabaseResponse;
   } catch {
-    if (isAuthInlineClearPath(pathname)) {
+    if (shouldClearInline(request, pathname)) {
       const response = NextResponse.next({ request });
       clearSupabaseAuthCookies(response, request);
       return response;
     }
-
-    if (isProtectedPath(pathname)) {
-      const url = new URL("/api/auth/clear-session", request.url);
-      url.searchParams.set("redirect", "/login?session=expired");
-      const response = NextResponse.redirect(url);
-      clearSupabaseAuthCookies(response, request);
-      return response;
-    }
-
-    return redirectToClearSession(request, pathname);
+    return redirectToProtectedClearSession(request);
   }
 }

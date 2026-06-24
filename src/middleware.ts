@@ -1,24 +1,41 @@
-import { type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import {
+  CLEAR_SESSION_LOGIN_REDIRECT,
   clearSupabaseAuthCookies,
   redirectToClearSession,
 } from "@/lib/supabase/auth-cookies";
+
+const PROTECTED_PREFIXES = [
+  "/dashboard",
+  "/deals",
+  "/disputes",
+  "/settings",
+  "/withdraw",
+  "/referrals",
+  "/admin",
+];
+
+function isProtectedPath(pathname: string): boolean {
+  return PROTECTED_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  );
+}
 
 export async function middleware(request: NextRequest) {
   try {
     return await updateSession(request);
   } catch {
     const pathname = request.nextUrl.pathname;
-    const redirectPath =
-      pathname.startsWith("/dashboard") ||
-      pathname.startsWith("/deals") ||
-      pathname.startsWith("/admin") ||
-      pathname.startsWith("/settings") ||
-      pathname.startsWith("/withdraw")
-        ? "/login?session=expired"
-        : pathname || "/";
-    const response = redirectToClearSession(request, redirectPath);
+    if (isProtectedPath(pathname)) {
+      const response = redirectToClearSession(
+        request,
+        CLEAR_SESSION_LOGIN_REDIRECT
+      );
+      clearSupabaseAuthCookies(response, request);
+      return response;
+    }
+    const response = NextResponse.next({ request });
     clearSupabaseAuthCookies(response, request);
     return response;
   }

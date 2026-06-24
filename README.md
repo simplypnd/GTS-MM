@@ -133,18 +133,26 @@ Operators should ensure compliance with applicable Philippine payment and fund-h
 
 ### 502 or stuck login (stale session cookies)
 
-If the app shows **502 Bad Gateway** or fails to load while **incognito works**, the browser likely has stale Supabase auth cookies (`sb-*`). After deploy, middleware redirects bad sessions through **`/api/auth/clear-session`** before rendering pages. Users can also recover manually:
+If the app shows **502 Bad Gateway**, **ERR_TOO_MANY_REDIRECTS**, or fails to load while **incognito works**, the browser likely has stale Supabase auth cookies (`sb-*`). After deploy, public pages clear bad sessions inline; protected routes use **`/api/auth/clear-session`** once, then land on login. Users can also recover manually:
 
-1. Open **`/api/auth/clear-session?redirect=/`** (or `?redirect=/login`) in the browser — clears auth cookies and redirects.
+1. Open **`/api/auth/clear-session?redirect=/login`** in the browser — clears auth cookies and redirects.
 2. Sign out (if the page loads) or use **Clear session** on the login page when `session=expired` is shown.
 3. Clear site cookies for your domain in browser settings.
 4. Use a private/incognito window and sign in again.
 
-On **nginx** (EC2), if errors persist with very large cookie headers (before Node runs), add to the server block:
+On **nginx** (EC2), add both request and **response** header buffers inside the `location /` block that proxies to Next.js:
 
 ```nginx
+# Large Cookie headers from browser (request)
 client_header_buffer_size 8k;
 large_client_header_buffers 4 16k;
+
+# Many Set-Cookie headers from Next.js (response) — fixes "upstream sent too big header"
+proxy_buffer_size 128k;
+proxy_buffers 4 256k;
+proxy_busy_buffers_size 256k;
+proxy_headers_hash_max_size 1024;
+proxy_headers_hash_bucket_size 128;
 ```
 
 Then `sudo nginx -t && sudo systemctl reload nginx`.
